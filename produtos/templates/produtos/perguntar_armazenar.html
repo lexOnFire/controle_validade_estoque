@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deseja armazenar</title>
+</head>
+<body>
+    <p>Produto : {{produto.nome}}</p>
+    <p>deseja armazenar esse produto?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="armazenar" value="sim">sim</button>
+        <button type="submit" name="armazenar" value="nao">nao</button>
+    </form>
+</body>
+</html>

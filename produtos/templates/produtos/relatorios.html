@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>relatorio</title>
+</head>
+<body>
+    <h2>relatorio de Produtos Armazenados</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Endereço</th>
+                <th>codigo</th>
+                <th>produto</th>
+                <th>validade</th>
+                <th>data</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in dados %}
+            <tr>
+                <td>{{ item.local}}</td>
+                <td>{{ item.produto.codigo}}</td>
+                <td>{{ item.produto.nome}}</td>
+                <td>{{ item.produto.validade}}</td>
+                <td>{{ item.produto.data_armazenado}}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">nenhum produto armazenado</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'painel' %}">⬅ Voltar ao painel</a>
+</body>
+</html>
