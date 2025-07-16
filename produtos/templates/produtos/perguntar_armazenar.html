@@ -1,17 +1,38 @@
+controle_validade_estoque/produtos/templates/produtos/perguntar_armazenar.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>deseja armazenar</title>
+    <title>Armazenar Produto</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+        h2 { color: #333; }
+        .produto-info { margin-bottom: 24px; }
+        button, input[type="submit"] { padding: 10px 20px; border: none; border-radius: 4px; background: #007bff; color: #fff; font-size: 16px; margin-right: 10px; }
+        .cancel { background: #6c757d; }
+    </style>
 </head>
 <body>
-    <p>Produto : {{produto.nome}}</p>
-    <p>deseja armazenar esse produto?</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" name="armazenar" value="sim">sim</button>
-        <button type="submit" name="armazenar" value="nao">nao</button>
-    </form>
+    <div class="container">
+        <h2>Armazenar Produto</h2>
+        <div class="produto-info">
+            <strong>Produto:</strong> {{ produto.nome }}<br>
+            <strong>Código:</strong> {{ produto.codigo }}
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <p>Deseja armazenar este produto?</p>
+            <button type="submit" name="armazenar" value="sim">Sim</button>
+            <button type="submit" name="armazenar" value="nao" class="cancel">Não</button>
+        </form>
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 </body>
 </html>

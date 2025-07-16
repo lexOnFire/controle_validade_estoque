@@ -1,35 +1,36 @@
-_estoque/produtos/templates/produtos/cadastrar_produto.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Produto</title>
+    <title>Cadastrar Endereço</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
         .container { max-width: 500px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
         h2 { color: #333; }
         form { display: flex; flex-direction: column; }
         label { margin-top: 10px; }
-        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { margin-top: 20px; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { margin-top: 20px; padding: 10px; background: #28a745; color: #fff; border: none; border-radius: 4px; font-size: 16px; }
         ul { color: #c00; margin-top: 16px; }
+        .success { color: #28a745; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Cadastrar Novo Produto</h2>
+        <h2>Cadastrar Novo Endereço</h2>
         <form method="POST">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">Cadastrar</button>
+            <button type="submit">Cadastrar Endereço</button>
         </form>
         {% if messages %}
             <ul>
                 {% for message in messages %}
-                    <li>{{ message }}</li>
+                    <li class="{% if message.tags == 'success' %}success{% endif %}">{{ message }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
+        <a href="{% url 'painel' %}">← Voltar ao Painel</a>
     </div>
 </body>
 </html>

@@ -1,24 +1,52 @@
+````html
+````html
+````html
+````html
+````html
+````html
+````html
+````html
+````html
+/produtos/templates/produtos/armazenar_produto.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>buscar produtos</title>
+    <title>Selecionar Endereço</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 500px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+        h2 { color: #333; }
+        select, button { width: 100%; padding: 10px; margin-top: 12px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #28a745; color: #fff; border: none; font-size: 16px; }
+        .produto-info { margin-bottom: 16px; }
+        ul { color: #c00; margin-top: 16px; }
+    </style>
 </head>
 <body>
-    <h2>Buscar produtos por codigos</h2>
-    <form method="POST">
-        {% csrf_token %}
-        <label for="codigos">Codigos do produtos:</label>
-        <input type="text" name="codigo" id="codigo" required>
-        <button type="submit">Buscar</button>
-    </form>
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{message}}</li>
-            {% endfor %}
-    </ul>
-    {% endif %}
+    <div class="container">
+        <h2>Selecionar Endereço para Armazenar</h2>
+        <div class="produto-info">
+            <strong>Produto:</strong> {{ produto.nome }}<br>
+            <strong>Código:</strong> {{ produto.codigo }}
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="endereco_id">Selecione o endereço:</label>
+            <select name="endereco_id" id="endereco_id" required>
+                {% for endereco in enderecos %}
+                    <option value="{{ endereco.id }}">{{ endereco }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Armazenar</button>
+        </form>
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 </body>
 </html>

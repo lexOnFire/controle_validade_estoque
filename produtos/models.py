@@ -29,7 +29,7 @@ class Armazenamento(models.Model):
     ap = models.CharField(max_length=50)
 
     def __str__(self):
-        return f"Livre {self.livre}, Rua: {self.rua}, Predio {self.predio}, Nivel {self.nivel}, Apartamento {self.ap}"
+        return f"Rua {self.rua}, Predio {self.predio}, Nivel {self.nivel}, Apartamento {self.ap}"
     
 
 

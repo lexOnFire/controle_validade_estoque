@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Produto, Armazenamento, Estoque
 from django.contrib import messages
-from .forms import ProdutoForm
+from .forms import ProdutoForm, ArmazenamentoForm
 
 
 def buscar_produto(request):
@@ -13,7 +13,7 @@ def buscar_produto(request):
         except Produto.DoesNotExist:
             messages.warning(request,'Produto não encontrado. Redirecionando para cadastro.')
             return redirect('cadastrar_produto')
-    return render(request,'produtos/armazenar_produto.html')
+    return render(request,'produtos/buscar_produto.html')
 
 def perguntar_armazenar(request,produto_id):
     produto = get_object_or_404(Produto,id=produto_id)
@@ -31,13 +31,13 @@ def armazenar_produto(request,produto_id):
     enderecos_disponiveis = Armazenamento.objects.filter(livre=True)
     if request.method == 'POST':
         endereco_id = request.POST.get('endereco_id')
-        local = get_object_or_404(Estoque, id=endereco_id)
+        local = get_object_or_404(Armazenamento, id=endereco_id)
         Estoque.objects.create(produto=produto, local=local)
         local.livre = False
         local.save()
-        messages.success(request,'Produto armazenamento com sucesso!')
+        messages.success(request,'Produto armazenado com sucesso!')
         return redirect('buscar_produto')
-    return render(request,'produtos/armazenar_produto.html',{'produto':produto,'endereco':enderecos_disponiveis})
+    return render(request,'produtos/armazenar_produto.html',{'produto':produto,'enderecos':enderecos_disponiveis})
 
 def relatorio_estoque(request):
     dados = Estoque.objects.select_related('produto','local')
@@ -58,7 +58,7 @@ def remover_produto(request,estoque_id):
     #remover registro estoque
     estoque.delete()
 
-    return redirect('peinel')    
+    return redirect('painel')    
 def cadastrar_produto(request):
     if request.method == 'POST':
         form = ProdutoForm(request.POST)
@@ -69,3 +69,15 @@ def cadastrar_produto(request):
         form = ProdutoForm()
 
     return render(request, 'produtos/cadastrar_produto.html',{'form':form})
+
+def cadastrar_enderecos(request):
+    if request.method == 'POST':
+        form = ArmazenamentoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Endereço cadastrado com sucesso!')
+            return redirect('painel')
+    else:
+        form = ArmazenamentoForm()
+
+    return render(request, 'produtos/cadastrar_enderecos.html', {'form': form})
