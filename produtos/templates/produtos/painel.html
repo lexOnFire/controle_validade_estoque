@@ -1,40 +1,176 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Painel de Estoque</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; }
-        .container { max-width: 1100px; margin: 40px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
-        h2 { color: #333; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f1f1f1; }
-        tr:hover { background: #f9f9f9; }
-        .top-bar { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .top-bar a, .top-bar button { background: #007bff; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 4px; border: none; font-size: 15px; transition: background 0.2s; cursor: pointer; }
-        .top-bar a:hover, .top-bar button:hover { background: #0056b3; }
-        .actions a { color: #c00; text-decoration: none; margin-right: 10px; }
-        .vencido { color: #c00; font-weight: bold; }
-        .ok { color: #28a745; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f1f1;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .top-bar a,
+        .top-bar button {
+            background: #007bff;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            border: none;
+            font-size: 15px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .top-bar a:hover,
+        .top-bar button:hover {
+            background: #0056b3;
+        }
+
+        .actions a {
+            color: #c00;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        .vencido {
+            color: #c00;
+            font-weight: bold;
+        }
+
+        .ok {
+            color: #28a745;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        ul {
+            color: #c00;
+            margin-top: 16px;
+            text-align: center;
+            list-style: none;
+            padding: 0;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="top-bar">
             <a href="{% url 'cadastrar_produto' %}">Cadastrar Produto</a>
             <a href="{% url 'cadastrar_enderecos' %}">Cadastrar Endereço</a>
-            <a href="{% url 'buscar_produto' %}">Pesquisar Código</a>
             <a href="{% url 'relatorio_estoque' %}">Relatório</a>
+            <a href="{% url 'exportar_estoque' %}">Exportar para Excel</a>
         </div>
         <h2>Painel de Estoque</h2>
+
+        <form method="get"
+            style="margin: 0 auto 24px auto; max-width: 400px; display: flex; gap: 10px; justify-content: center;">
+            <input type="text" name="busca-codigo" placeholder="Digite o código do produto" value="{{ busca_codigo }}"
+                style="flex:1; padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+            <button type="submit"
+                style="padding: 10px 18px; border-radius: 4px; background: #007bff; color: #fff; border: none;">Pesquisar
+                Código</button>
+        </form>
+
+        {% if busca_codigo %}
+        {% if resultado_busca == 'not_found' %}
+        <div style="color: #c00; margin-bottom: 16px; text-align:center;">Produto não encontrado!</div>
+        <form method="get" action="{% url 'armazenar_produto' %}" style="text-align:center;">
+            <input type="hidden" name="codigo" value="{{ busca_codigo }}">
+            <button type="submit" style="margin-top:10px;">Cadastrar e armazenar este produto?</button>
+        </form>
+        {% else %}
+        <div style="background: #e9ffe9; border: 1px solid #28a745; padding: 12px; border-radius: 6px; margin-bottom: 16px; text-align:center;">
+            <b>Produto encontrado:</b><br>
+            Nome: {{ resultado_busca.nome }}<br>
+            Código: {{ resultado_busca.codigo }}<br>
+
+            {% if lotes_existentes %}
+            <p><strong>Lotes existentes:</strong></p>
+            <ul style="list-style: none; padding: 0;">
+                {% for lote in lotes_existentes %}
+                <li>Lote: {{ lote.numero_lote|default:"Sem número" }} -
+                    Validade: {{ lote.validade|date:"d/m/Y" }} -
+                    Quantidade: {{ lote.quantidade }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <div style="margin-top: 15px;">
+                <p><strong>O que deseja fazer?</strong></p>
+                <form method="get" action="{% url 'armazenar_produto' resultado_busca.id %}" style="display:inline;">
+                    <button type="submit" style="margin-top:10px;">Armazenar com nova validade</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
         <table>
             <thead>
                 <tr>
-                    <th>Endereço</th>
+                    <th>Rua</th>
+                    <th>Prédio</th>
+                    <th>Nível</th>
+                    <th>Ap</th>
                     <th>Código</th>
                     <th>Produto</th>
-                    <th>Validade</th>
+                    <th>Validade 1</th>
+                    <th>Validade 2</th>
+                    <th>Validade 3</th>
                     <th>Data de Abastecimento</th>
                     <th>Quantidade</th>
                     <th>Status</th>
@@ -42,39 +178,69 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in dados %}
+                {% for item in page_obj %}
                 <tr>
-                    <td>{{ item.local }}</td>
+                    <td>{{ item.local.rua }}</td>
+                    <td>{{ item.local.predio }}</td>
+                    <td>{{ item.local.nivel }}</td>
+                    <td>{{ item.local.ap }}</td>
                     <td>{{ item.produto.codigo }}</td>
-                    <td>{{ item.produto.nome }}</td>
+                    <td class="nowrap">{{ item.produto.nome }}</td>
                     <td>{{ item.produto.validade|date:"d/m/Y" }}</td>
-                    <td>{{ item.produto.quantidade }}</td>
                     <td>
-                        {% if item.produto.vencidos %}
-                            <span class="vencido">Vencido</span>
+                        {% if item.produto.validade2 %}
+                        {{ item.produto.validade2|date:"d/m/Y" }}
                         {% else %}
-                            <span class="ok">Dentro da validade</span>
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.produto.validade3 %}
+                        {{ item.produto.validade3|date:"d/m/Y" }}
+                        {% else %}
+                        -
                         {% endif %}
                     </td>
                     <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
+                    <td>{{ item.produto.quantidade }}</td>
+                    <td>
+                        {% if item.produto.vencido %}
+                        <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
+                        {% elif item.produto.proximo_vencimento %}
+                        <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
+                        {% else %}
+                        <span class="ok">Dentro da validade</span>
+                        {% endif %}
+                    </td>
                     <td class="actions">
-                        <a href="{% url 'remover_produto' item.id %}" onclick="return confirm('Remover este produto do estoque?')">Remover</a>
+                        <a href="{% url 'remover_produto' item.id %}"
+                            onclick="return confirm('Remover este produto do estoque?')">Remover</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8">Nenhum produto armazenado.</td>
+                    <td colspan="13" style="text-align:center;">Nenhum produto armazenado.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">Anterior</a>
+            {% endif %}
+            <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">Próxima</a>
+            {% endif %}
+        </div>
         {% if messages %}
-            <ul>
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
-            </ul>
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
     </div>
 </body>
+
 </html>

@@ -1,37 +1,38 @@
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-/produtos/templates/produtos/armazenar_produto.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Selecionar Endereço</title>
+    <title>Armazenar Produto</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
         .container { max-width: 500px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
         h2 { color: #333; }
-        select, button { width: 100%; padding: 10px; margin-top: 12px; border-radius: 4px; border: 1px solid #ccc; }
+        select, button, input[type="text"], input[type="date"] { width: 100%; padding: 10px; margin-top: 12px; border-radius: 4px; border: 1px solid #ccc; }
         button { background: #28a745; color: #fff; border: none; font-size: 16px; }
         .produto-info { margin-bottom: 16px; }
         ul { color: #c00; margin-top: 16px; }
+        label { margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Selecionar Endereço para Armazenar</h2>
-        <div class="produto-info">
-            <strong>Produto:</strong> {{ produto.nome }}<br>
-            <strong>Código:</strong> {{ produto.codigo }}
-        </div>
+        <h2>Armazenar Produto</h2>
         <form method="POST">
             {% csrf_token %}
+            <label>Código:</label>
+            <input type="text" name="codigo" value="{{ codigo }}" readonly>
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ produto.nome|default_if_none:'' }}" {% if produto %}readonly{% endif %} required>
+            <label>Peso:</label>
+            <input type="text" name="peso" value="{{ produto.peso|default_if_none:'' }}" {% if produto %}readonly{% endif %} required>
+            <label>Validade:</label>
+            <input type="date" name="validade" required>
+            <label>Número do Lote:</label>
+            <input type="text" name="numero_lote">
+            <label>Quantidade:</label>
+            <input type="number" name="quantidade" min="1" value="1" required>
+            <label>Data de Armazenamento:</label>
+            <input type="date" name="data_armazenado" value="{{ hoje }}" required>
             <label for="endereco_id">Selecione o endereço:</label>
             <select name="endereco_id" id="endereco_id" required>
                 {% for endereco in enderecos %}
@@ -46,6 +47,14 @@
                     <li>{{ message }}</li>
                 {% endfor %}
             </ul>
+        {% endif %}
+        {% if produto %}
+            <div style="background: #f0f8ff; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                <p><strong>Atenção:</strong> Você está adicionando uma nova validade para "{{ produto.nome }}".</p>
+                {% if produto.validade %}<p>Validade 1: {{ produto.validade|date:"d/m/Y" }}</p>{% endif %}
+                {% if produto.validade2 %}<p>Validade 2: {{ produto.validade2|date:"d/m/Y" }}</p>{% endif %}
+                {% if produto.validade3 %}<p>Validade 3: {{ produto.validade3|date:"d/m/Y" }}</p>{% endif %}
+            </div>
         {% endif %}
     </div>
 </body>

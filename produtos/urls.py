@@ -9,4 +9,8 @@ urlpatterns = [path('buscar/',views.buscar_produto,name='buscar_produto'),
                path('painel/',views.painel, name='painel'),
                path('remover/<int:estoque_id>/',views.remover_produto,name='remover_produto'),
                path('cadastrar_produto/',cadastrar_produto,name='cadastrar_produto'),
-               path('cadastrar-endereco/', views.cadastrar_enderecos, name='cadastrar_enderecos'),]
+               path('cadastrar-endereco/', views.cadastrar_enderecos, name='cadastrar_enderecos'),
+               path('exportar-estoque/', views.exportar_estoque_csv, name='exportar_estoque'),
+               path('armazenar/', views.armazenar_produto, name='armazenar_produto'),
+               path('armazenar/<int:produto_id>/', views.armazenar_produto, name='armazenar_produto'),
+               ]
