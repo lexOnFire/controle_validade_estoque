@@ -39,24 +39,28 @@ def armazenar_produto(request,produto_id):
         return redirect('buscar_produto')
     return render(request,'produtos/armazenar_produto.html',{'produto':produto,'enderecos':enderecos_disponiveis})
 
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def relatorio_estoque(request):
     dados = Estoque.objects.select_related('produto','local')
     return render(request,'produtos/relatorios.html',{'dados':dados})
 
+@login_required
 def painel(request):
     dados = Estoque.objects.select_related('produto','local')
-
     return render(request,'produtos/painel.html',{'dados': dados})
 
 def remover_produto(request,estoque_id):
-    estoque = get_object_or_404(Estoque,id=estoque_id)
-
-    #liberar endereço
-    estoque.local.livre = True
-    estoque.local.save()
-
-    #remover registro estoque
-    estoque.delete()
+    try:
+        estoque = get_object_or_404(Estoque,id=estoque_id)
+        estoque.local.livre = True
+        estoque.local.save()
+        estoque.delete()
+        messages.success(request, 'Produto removido e endereço liberado com sucesso!')
+    except Exception as e:
+        messages.error(request, f'Erro ao remover produto: {str(e)}')
+    return redirect('painel')
 
     return redirect('painel')    
 def cadastrar_produto(request):
