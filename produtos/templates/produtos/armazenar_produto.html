@@ -30,8 +30,12 @@
                     <option value="{{ endereco.id }}" {% if endereco.id|stringformat:'s' == endereco_id %}selected{% endif %}>{{ endereco }}</option>
                 {% endfor %}
             </select>
-            <label for="validade">Data de validade:</label>
-            <input type="date" name="validade" id="validade" value="{{ validade|default:produto.validade|date:'Y-m-d' }}" required>
+            <label for="validade1">Validade 1:</label>
+            <input type="date" name="validade1" id="validade1" value="{{ validade1|default:'' }}">
+            <label for="validade2">Validade 2:</label>
+            <input type="date" name="validade2" id="validade2" value="{{ validade2|default:'' }}">
+            <label for="validade3">Validade 3:</label>
+            <input type="date" name="validade3" id="validade3" value="{{ validade3|default:'' }}">
             <label for="data_armazenado">Data de armazenamento:</label>
             <input type="date" name="data_armazenado" id="data_armazenado" value="{{ data_armazenado|default:today|default:'' }}">
             {% if pergunta_validade %}

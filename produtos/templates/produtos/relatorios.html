@@ -37,34 +37,36 @@ dutos/templates/produtos/relatorios.html -->
                     <th>Código</th>
                     <th>Produto</th>
                     <th>Quantidade</th>
-                    <th>Validades</th>
-                    <th>Status</th>
+                    <th>Validade 1</th>
+                    <th>Validade 2</th>
+                    <th>Validade 3</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in dados %}
                 <tr>
-                    <td>{{ item.local.rua }}</td>
-                    <td>{{ item.local.predio }}</td>
-                    <td>{{ item.local.nivel }}</td>
-                    <td>{{ item.local.ap }}</td>
-                    <td class="nowrap">{{ item.produto.nome }}</td>
-                    <td>{{ item.produto.codigo }}</td>
-                    <td>{{ item.produto.quantidade }}</td>
-                    <td>
-                        {% for validade in item.validades.all %}
-                            <span>{{ validade.validade|date:"d/m/Y" }}</span>{% if not forloop.last %}, {% endif %}
-                        {% empty %}
-                            <span>-</span>
-                        {% endfor %}
-                    </td>
-                    <td>
-                        {% if item.produto.vencidos %}
-                            <span class="vencido">Vencido</span>
-                        {% else %}
-                            <span class="ok">Dentro da validade</span>
-                        {% endif %}
-                    </td>
+                    <td>{{ item.item.local.rua }}</td>
+                    <td>{{ item.item.local.predio }}</td>
+                    <td>{{ item.item.local.nivel }}</td>
+                    <td>{{ item.item.local.ap }}</td>
+                    <td class="nowrap">{{ item.item.produto.nome }}</td>
+                    <td>{{ item.item.produto.codigo }}</td>
+                    <td>{{ item.item.produto.quantidade }}</td>
+                    {% for v in item.validades %}
+                        <td>
+                            {% if v.data %}
+                                {% if v.cor == 'vencido' %}
+                                    <span style="color:#c00;font-weight:bold">{{ v.data|date:"d/m/Y" }}</span>
+                                {% elif v.cor == 'perto' %}
+                                    <span style="color:#ffc107;font-weight:bold">{{ v.data|date:"d/m/Y" }}</span>
+                                {% else %}
+                                    <span style="color:#28a745;font-weight:bold">{{ v.data|date:"d/m/Y" }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span>-</span>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
                 </tr>
                 {% empty %}
                 <tr>

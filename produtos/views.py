@@ -32,51 +32,103 @@ def armazenar_produto(request,produto_id):
     enderecos_disponiveis = Armazenamento.objects.filter(livre=True) | Armazenamento.objects.filter(estoque__produto=produto)
     if request.method == 'POST':
         endereco_id = request.POST.get('endereco_id')
-        validade = request.POST.get('validade')
+        validade1 = request.POST.get('validade1')
+        validade2 = request.POST.get('validade2')
+        validade3 = request.POST.get('validade3')
         data_armazenado = request.POST.get('data_armazenado')
         adicionar_val = request.POST.get('adicionar_validade')
         local = get_object_or_404(Armazenamento, id=endereco_id)
         estoque_existente = Estoque.objects.filter(produto=produto, local=local).first()
+        validades = [v for v in [validade1, validade2, validade3] if v]
         if estoque_existente:
             if not adicionar_val:
-                # Pergunta ao usuário se deseja adicionar nova validade
+                from datetime import date
                 return render(request, 'produtos/armazenar_produto.html', {
                     'produto': produto,
                     'enderecos': enderecos_disponiveis,
                     'pergunta_validade': True,
                     'endereco_id': endereco_id,
-                    'validade': validade,
-                    'data_armazenado': data_armazenado
+                    'validade1': validade1,
+                    'validade2': validade2,
+                    'validade3': validade3,
+                    'data_armazenado': data_armazenado,
+                    'today': date.today().isoformat()
                 })
-            # Adiciona nova validade ao estoque existente
-            ValidadeEstoque.objects.create(estoque=estoque_existente, validade=validade)
-            messages.success(request, 'Nova validade adicionada ao mesmo endereço!')
+            # Adiciona novas validades ao estoque existente
+            for validade in validades:
+                ValidadeEstoque.objects.create(estoque=estoque_existente, validade=validade)
+            messages.success(request, 'Novas validades adicionadas ao mesmo endereço!')
             return redirect('painel')
-        # Cria novo estoque e validade
+        # Cria novo estoque e validades
         if data_armazenado:
             estoque = Estoque.objects.create(produto=produto, local=local, data_armazenado=data_armazenado)
         else:
             estoque = Estoque.objects.create(produto=produto, local=local)
-        ValidadeEstoque.objects.create(estoque=estoque, validade=validade)
+        for validade in validades:
+            ValidadeEstoque.objects.create(estoque=estoque, validade=validade)
         local.livre = False
         local.save()
         messages.success(request,'Produto armazenado com sucesso!')
         return redirect('painel')
-    return render(request,'produtos/armazenar_produto.html',{'produto':produto,'enderecos':enderecos_disponiveis})
+    from datetime import date
+    return render(request,'produtos/armazenar_produto.html',{
+        'produto':produto,
+        'enderecos':enderecos_disponiveis,
+        'today': date.today().isoformat()
+    })
 
 from django.contrib.auth.decorators import login_required
 
 @login_required
 def relatorio_estoque(request):
-    dados = Estoque.objects.select_related('produto','local')
+    from datetime import date, timedelta
+    dados = []
+    hoje = date.today()
+    for item in Estoque.objects.select_related('produto','local'):
+        validades = []
+        for v in item.validades.all()[:3]:
+            dias = (v.validade - hoje).days
+            if dias < 0:
+                cor = 'vencido'
+            elif dias < 30:
+                cor = 'perto'
+            else:
+                cor = 'ok'
+            validades.append({'data': v.validade, 'cor': cor})
+        # Preencher até 3
+        while len(validades) < 3:
+            validades.append({'data': None, 'cor': ''})
+        dados.append({
+            'item': item,
+            'validades': validades
+        })
     return render(request,'produtos/relatorios.html',{'dados':dados})
 
 @login_required
 def painel(request):
-    dados = Estoque.objects.select_related('produto','local')
+    from datetime import date, timedelta
     resultado_busca = None
     perguntar_armazenar = False
     produto_encontrado = None
+    dados = []
+    hoje = date.today()
+    for item in Estoque.objects.select_related('produto','local'):
+        validades = []
+        for v in item.validades.all()[:3]:
+            dias = (v.validade - hoje).days
+            if dias < 0:
+                cor = 'vencido'
+            elif dias < 30:
+                cor = 'perto'
+            else:
+                cor = 'ok'
+            validades.append({'data': v.validade, 'cor': cor})
+        while len(validades) < 3:
+            validades.append({'data': None, 'cor': ''})
+        dados.append({
+            'item': item,
+            'validades': validades
+        })
     if request.method == 'POST' and 'codigo_busca' in request.POST:
         codigo = request.POST.get('codigo_busca')
         try:
