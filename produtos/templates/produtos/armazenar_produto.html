@@ -1,12 +1,4 @@
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
+
 /produtos/templates/produtos/armazenar_produto.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -35,10 +27,20 @@
             <label for="endereco_id">Selecione o endereço:</label>
             <select name="endereco_id" id="endereco_id" required>
                 {% for endereco in enderecos %}
-                    <option value="{{ endereco.id }}">{{ endereco }}</option>
+                    <option value="{{ endereco.id }}" {% if endereco.id|stringformat:'s' == endereco_id %}selected{% endif %}>{{ endereco }}</option>
                 {% endfor %}
             </select>
-            <button type="submit">Armazenar</button>
+            <label for="validade">Data de validade:</label>
+            <input type="date" name="validade" id="validade" value="{{ validade|default:produto.validade|date:'Y-m-d' }}" required>
+            <label for="data_armazenado">Data de armazenamento:</label>
+            <input type="date" name="data_armazenado" id="data_armazenado" value="{{ data_armazenado|default:today|default:'' }}">
+            {% if pergunta_validade %}
+                <p>Já existe produto com esse código neste endereço. Deseja adicionar uma nova validade?</p>
+                <button type="submit" name="adicionar_validade" value="sim">Adicionar nova validade</button>
+                <a href="{% url 'painel' %}">Cancelar</a>
+            {% else %}
+                <button type="submit">Armazenar</button>
+            {% endif %}
         </form>
         {% if messages %}
             <ul>

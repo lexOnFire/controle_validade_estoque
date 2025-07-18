@@ -7,7 +7,7 @@ from .models import Produto, Armazenamento
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto
-        fields = ['nome','codigo','validade','quantidade']
+        fields = ['nome','codigo','validade','quantidade','data_fabricacao','peso','lote']
 
     def clean_validade(self):
         validade = self.cleaned_data['validade']

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Produto, Armazenamento, Estoque
+from .models import Produto, Armazenamento, Estoque, ValidadeEstoque
 from django.contrib import messages
 from .forms import ProdutoForm, ArmazenamentoForm
 
@@ -27,16 +27,41 @@ def perguntar_armazenar(request,produto_id):
     return render(request,'produtos/perguntar_armazenar.html',{'produto':produto})
  
 def armazenar_produto(request,produto_id):
+    from .models import ValidadeEstoque
     produto = get_object_or_404(Produto,id=produto_id)
-    enderecos_disponiveis = Armazenamento.objects.filter(livre=True)
+    enderecos_disponiveis = Armazenamento.objects.filter(livre=True) | Armazenamento.objects.filter(estoque__produto=produto)
     if request.method == 'POST':
         endereco_id = request.POST.get('endereco_id')
+        validade = request.POST.get('validade')
+        data_armazenado = request.POST.get('data_armazenado')
+        adicionar_val = request.POST.get('adicionar_validade')
         local = get_object_or_404(Armazenamento, id=endereco_id)
-        Estoque.objects.create(produto=produto, local=local)
+        estoque_existente = Estoque.objects.filter(produto=produto, local=local).first()
+        if estoque_existente:
+            if not adicionar_val:
+                # Pergunta ao usuário se deseja adicionar nova validade
+                return render(request, 'produtos/armazenar_produto.html', {
+                    'produto': produto,
+                    'enderecos': enderecos_disponiveis,
+                    'pergunta_validade': True,
+                    'endereco_id': endereco_id,
+                    'validade': validade,
+                    'data_armazenado': data_armazenado
+                })
+            # Adiciona nova validade ao estoque existente
+            ValidadeEstoque.objects.create(estoque=estoque_existente, validade=validade)
+            messages.success(request, 'Nova validade adicionada ao mesmo endereço!')
+            return redirect('painel')
+        # Cria novo estoque e validade
+        if data_armazenado:
+            estoque = Estoque.objects.create(produto=produto, local=local, data_armazenado=data_armazenado)
+        else:
+            estoque = Estoque.objects.create(produto=produto, local=local)
+        ValidadeEstoque.objects.create(estoque=estoque, validade=validade)
         local.livre = False
         local.save()
         messages.success(request,'Produto armazenado com sucesso!')
-        return redirect('buscar_produto')
+        return redirect('painel')
     return render(request,'produtos/armazenar_produto.html',{'produto':produto,'enderecos':enderecos_disponiveis})
 
 from django.contrib.auth.decorators import login_required
@@ -49,7 +74,27 @@ def relatorio_estoque(request):
 @login_required
 def painel(request):
     dados = Estoque.objects.select_related('produto','local')
-    return render(request,'produtos/painel.html',{'dados': dados})
+    resultado_busca = None
+    perguntar_armazenar = False
+    produto_encontrado = None
+    if request.method == 'POST' and 'codigo_busca' in request.POST:
+        codigo = request.POST.get('codigo_busca')
+        try:
+            produto = Produto.objects.get(codigo=codigo)
+            resultado_busca = produto
+            perguntar_armazenar = True
+            produto_encontrado = produto
+        except Produto.DoesNotExist:
+            resultado_busca = 'not_found'
+    if request.method == 'POST' and 'armazenar_produto_id' in request.POST:
+        produto_id = request.POST.get('armazenar_produto_id')
+        return redirect('armazenar_produto', produto_id=produto_id)
+    return render(request,'produtos/painel.html',{
+        'dados': dados,
+        'resultado_busca': resultado_busca,
+        'perguntar_armazenar': perguntar_armazenar,
+        'produto_encontrado': produto_encontrado
+    })
 
 def remover_produto(request,estoque_id):
     try:

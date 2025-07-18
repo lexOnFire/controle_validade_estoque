@@ -1,23 +1,4 @@
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
-````html
+
 dutos/templates/produtos/relatorios.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -49,21 +30,34 @@ dutos/templates/produtos/relatorios.html -->
         <table>
             <thead>
                 <tr>
-                    <th>Produto</th>
+                    <th>Rua</th>
+                    <th>Prédio</th>
+                    <th>Nível</th>
+                    <th>Apartamento</th>
                     <th>Código</th>
+                    <th>Produto</th>
                     <th>Quantidade</th>
-                    <th>Validade</th>
+                    <th>Validades</th>
                     <th>Status</th>
-                    <th>Endereço</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in dados %}
                 <tr>
-                    <td>{{ item.produto.nome }}</td>
+                    <td>{{ item.local.rua }}</td>
+                    <td>{{ item.local.predio }}</td>
+                    <td>{{ item.local.nivel }}</td>
+                    <td>{{ item.local.ap }}</td>
+                    <td class="nowrap">{{ item.produto.nome }}</td>
                     <td>{{ item.produto.codigo }}</td>
                     <td>{{ item.produto.quantidade }}</td>
-                    <td>{{ item.produto.validade|date:"d/m/Y" }}</td>
+                    <td>
+                        {% for validade in item.validades.all %}
+                            <span>{{ validade.validade|date:"d/m/Y" }}</span>{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span>-</span>
+                        {% endfor %}
+                    </td>
                     <td>
                         {% if item.produto.vencidos %}
                             <span class="vencido">Vencido</span>
@@ -71,7 +65,6 @@ dutos/templates/produtos/relatorios.html -->
                             <span class="ok">Dentro da validade</span>
                         {% endif %}
                     </td>
-                    <td>{{ item.local }}</td>
                 </tr>
                 {% empty %}
                 <tr>
