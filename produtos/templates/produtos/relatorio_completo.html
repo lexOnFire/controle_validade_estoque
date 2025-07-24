@@ -31,6 +31,7 @@
                     <th>Ap</th>
                     <th>Código</th>
                     <th>Produto</th>
+                    <th>Peso</th>
                     <th>Validade 1</th>
                     <th>Validade 2</th>
                     <th>Validade 3</th>
@@ -49,6 +50,7 @@
                     <td>{{ item.local.ap }}</td>
                     <td>{{ item.produto.codigo }}</td>
                     <td class="nowrap">{{ item.produto.nome }}</td>
+                    <td class="nowrap">{{ item.produto.peso }}</td>
                     <td>{% if lotes|length > 0 %}{{ lotes.0.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
                     <td>{% if lotes|length > 1 %}{{ lotes.1.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
                     <td>{% if lotes|length > 2 %}{{ lotes.2.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>

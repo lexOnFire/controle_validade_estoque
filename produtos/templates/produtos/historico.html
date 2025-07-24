@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico de Movimentações - Controle de Estoque</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            background: #0056b3;
+        }
+
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .filter-btn:hover {
+            background: #0056b3;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .operacao-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .operacao-entrada {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .operacao-saida {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .operacao-transferencia {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .operacao-ajuste {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .operacao-vencimento {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 4px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a:hover {
+            background: #0056b3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Histórico de Movimentações</h1>
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+                <a href="{% url 'painel' %}">📋 Painel</a>
+                <a href="{% url 'alertas' %}">🔔 Alertas</a>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-bar">
+            <form method="get">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="tipo">Tipo de Operação:</label>
+                        <select name="tipo" id="tipo">
+                            <option value="">Todos os tipos</option>
+                            {% for codigo, nome in tipos_operacao %}
+                            <option value="{{ codigo }}" {% if tipo_filtro == codigo %}selected{% endif %}>{{ nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="produto">Produto:</label>
+                        <input type="text" name="produto" id="produto" placeholder="Nome ou código do produto" value="{{ produto_filtro }}">
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="filter-btn">🔍 Filtrar</button>
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <a href="{% url 'historico_movimentacoes' %}" style="display: inline-block; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">
+                            🔄 Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Estatísticas rápidas -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                <div class="stat-label">Total de Movimentações</div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-container">
+            {% if page_obj %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Operação</th>
+                        <th>Produto</th>
+                        <th>Código</th>
+                        <th>Origem</th>
+                        <th>Destino</th>
+                        <th>Quantidade</th>
+                        <th>Usuário</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movimento in page_obj %}
+                    <tr>
+                        <td>{{ movimento.data_operacao|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="operacao-badge operacao-{{ movimento.tipo_operacao }}">
+                                {{ movimento.get_tipo_operacao_display }}
+                            </span>
+                        </td>
+                        <td>{{ movimento.produto.nome }}</td>
+                        <td>{{ movimento.produto.codigo }}</td>
+                        <td>
+                            {% if movimento.local_origem %}
+                                {{ movimento.local_origem }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if movimento.local_destino %}
+                                {{ movimento.local_destino }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ movimento.quantidade }}</td>
+                        <td>{{ movimento.usuario|default:"Sistema" }}</td>
+                        <td>{{ movimento.observacoes|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if produto_filtro %}&produto={{ produto_filtro }}{% endif %}">« Anterior</a>
+                {% endif %}
+                
+                <span style="margin: 0 15px; color: #666;">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}{% if produto_filtro %}&produto={{ produto_filtro }}{% endif %}">Próxima »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <h3>📝 Nenhuma movimentação encontrada</h3>
+                <p>Não há registros de movimentações com os filtros aplicados.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

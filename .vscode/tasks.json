@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Executar servidor Django",
+			"type": "shell",
+			"command": "/workspaces/controle_validade_estoque/.venv/bin/python",
+			"args": [
+				"manage.py",
+				"runserver",
+				"0.0.0.0:8000"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

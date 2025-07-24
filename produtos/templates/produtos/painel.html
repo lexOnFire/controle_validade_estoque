@@ -11,7 +11,7 @@
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1600px;
             margin: 40px auto;
             background: #fff;
             padding: 32px;
@@ -29,15 +29,115 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 24px;
-            min-width: 1200px;
+            margin-bottom: 30px;
+            min-width: 1400px;
+            table-layout: fixed;
+        }
+
+        .predio-section {
+            margin-bottom: 40px;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .predio-title {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px;
+            margin-bottom: 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .predio-section {
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .predio-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            margin: 0;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .rua-section {
+            margin-bottom: 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rua-title {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #495057;
+            padding: 0.75rem 1rem;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .predio-table {
+            border-radius: 0;
+            overflow: visible;
+            margin: 0;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .predio-table th {
+            background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding: 12px 8px;
+            word-wrap: break-word;
+        }
+
+        .predio-table td {
+            padding: 12px 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: top;
+        }
+
+        /* Definir larguras específicas para as colunas */
+        .predio-table th:nth-child(1), .predio-table td:nth-child(1) { width: 25%; } /* Endereço Completo */
+        .predio-table th:nth-child(2), .predio-table td:nth-child(2) { width: 8%; }  /* Código */
+        .predio-table th:nth-child(3), .predio-table td:nth-child(3) { width: 20%; } /* Produto */
+        .predio-table th:nth-child(4), .predio-table td:nth-child(4) { width: 8%; }  /* Peso */
+        .predio-table th:nth-child(5), .predio-table td:nth-child(5) { width: 9%; }  /* Validade 1 */
+        .predio-table th:nth-child(6), .predio-table td:nth-child(6) { width: 9%; }  /* Validade 2 */
+        .predio-table th:nth-child(7), .predio-table td:nth-child(7) { width: 9%; }  /* Validade 3 */
+        .predio-table th:nth-child(8), .predio-table td:nth-child(8) { width: 12%; } /* Data Abastecimento */
+        .predio-table th:nth-child(9), .predio-table td:nth-child(9) { width: 12%; } /* Status */
+        .predio-table th:nth-child(10), .predio-table td:nth-child(10) { width: 15%; } /* Ações */
+
+        .predio-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .predio-table tbody tr:hover {
+            background-color: #e3f2fd;
         }
 
         th,
         td {
-            padding: 10px;
+            padding: 12px 8px;
             border-bottom: 1px solid #eee;
             text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         th {
@@ -90,7 +190,24 @@
         }
 
         .nowrap {
-            white-space: nowrap;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        /* Melhorar a responsividade em telas menores */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 16px;
+                margin: 20px auto;
+            }
+            
+            .predio-table {
+                font-size: 14px;
+            }
+            
+            .predio-table th, .predio-table td {
+                padding: 8px 6px;
+            }
         }
 
         .pagination {
@@ -111,14 +228,67 @@
 <body>
     <div class="container">
         <div class="top-bar">
+            <a href="{% url 'dashboard' %}">📊 Dashboard</a>
             <a href="{% url 'cadastrar_produto' %}">Cadastrar Produto</a>
+            <a href="{% url 'listar_produtos' %}">📝 Gerenciar Produtos</a>
+            <a href="{% url 'importar_produtos_csv' %}">📦 Importar CSV</a>
             <a href="{% url 'cadastrar_enderecos' %}">Cadastrar Endereço</a>
             <a href="{% url 'relatorio_completo' %}">Relatório Completo</a>
+            <a href="{% url 'alertas' %}">🔔 Alertas</a>
+            <a href="{% url 'historico_movimentacoes' %}">📈 Histórico</a>
         </div>
         <h2>Painel de Estoque</h2>
 
+        <!-- Filtros Avançados -->
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="margin-top: 0;">🔍 Filtros Avançados</h4>
+            <form method="get" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: end;">
+                <div>
+                    <label for="busca" style="display: block; margin-bottom: 5px; font-weight: bold;">Buscar Produto:</label>
+                    <input type="text" name="busca" id="busca" placeholder="Nome, código ou fornecedor" value="{{ busca }}"
+                        style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="predio" style="display: block; margin-bottom: 5px; font-weight: bold;">Prédio:</label>
+                    <select name="predio" id="predio" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Todos os prédios</option>
+                        {% for predio_disp in predios_disponiveis %}
+                        <option value="{{ predio_disp }}" {% if filtro_predio == predio_disp %}selected{% endif %}>{{ predio_disp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="status" style="display: block; margin-bottom: 5px; font-weight: bold;">Status:</label>
+                    <select name="status" id="status" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Todos os status</option>
+                        <option value="vencido" {% if filtro_status == 'vencido' %}selected{% endif %}>Vencidos</option>
+                        <option value="proximo_vencimento" {% if filtro_status == 'proximo_vencimento' %}selected{% endif %}>Próximo ao vencimento</option>
+                        <option value="valido" {% if filtro_status == 'valido' %}selected{% endif %}>Válidos</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="categoria" style="display: block; margin-bottom: 5px; font-weight: bold;">Categoria:</label>
+                    <select name="categoria" id="categoria" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">Todas as categorias</option>
+                        {% for categoria_disp in categorias_disponiveis %}
+                        <option value="{{ categoria_disp }}" {% if filtro_categoria == categoria_disp %}selected{% endif %}>{{ categoria_disp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="grid-column: span 2;">
+                    <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                        🔍 Filtrar
+                    </button>
+                    <a href="{% url 'painel' %}" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">
+                        🔄 Limpar Filtros
+                    </a>
+                </div>
+            </form>
+        </div>
+
         <form method="get"
-            style="margin: 0 auto 24px auto; max-width: 400px; display: flex; gap: 10px; justify-content: center;">
+            style="margin: 0 auto 24px auto; max-width: 400px; display: flex; gap: 10px; justify-content: center;"
+            id="busca-codigo-form">
             <input type="text" name="busca-codigo" placeholder="Digite o código do produto" value="{{ busca_codigo }}"
                 style="flex:1; padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
             <button type="submit"
@@ -160,89 +330,98 @@
         {% endif %}
         {% endif %}
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Rua</th>
-                    <th>Prédio</th>
-                    <th>Nível</th>
-                    <th>Ap</th>
-                    <th>Código</th>
-                    <th>Produto</th>
-                    <th>Validade 1</th>
-                    <th>Validade 2</th>
-                    <th>Validade 3</th>
-                    <th>Data de Abastecimento</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in page_obj %}
-                {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
-                <tr>
-                    <td>{{ item.local.rua }}</td>
-                    <td>{{ item.local.predio }}</td>
-                    <td>{{ item.local.nivel }}</td>
-                    <td>{{ item.local.ap }}</td>
-                    <td>{{ item.produto.codigo }}</td>
-                    <td class="nowrap">{{ item.produto.nome }}</td>
-                    <td>
-                        {% if lotes|length > 0 %}
-                            {{ lotes.0.validade|date:"d/m/Y" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if lotes|length > 1 %}
-                            {{ lotes.1.validade|date:"d/m/Y" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if lotes|length > 2 %}
-                            {{ lotes.2.validade|date:"d/m/Y" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
-                    <td>
-                        {% if lotes and lotes.0.validade <= today %}
-                            <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
-                        {% elif lotes and lotes.0.validade <= hoje_mais_30 %}
-                            <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
-                        {% else %}
-                            <span class="ok">Dentro da validade</span>
-                        {% endif %}
-                    </td>
-                    <td class="actions">
-                        <a href="{% url 'remover_produto' item.id %}"
-                            onclick="return confirm('Remover este produto do estoque?')">Remover</a>
-                        {% if lotes|length > 0 %}
-                            <a href="{% url 'editar_lote' lotes.0.id %}" style="color:#007bff; margin-left:10px;">Editar</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endwith %}
-                {% empty %}
-                <tr>
-                    <td colspan="12" style="text-align:center;">Nenhum produto armazenado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">Anterior</a>
-            {% endif %}
-            <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}">Próxima</a>
-            {% endif %}
-        </div>
+        {% if predios %}
+            {% for predio_nome, ruas in predios.items %}
+            <div class="predio-section" style="margin-bottom: 2rem;">
+                <h2 class="predio-title" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold;">
+                    🏢 Prédio: {{ predio_nome }}
+                </h2>
+                
+                {% for rua_nome, itens in ruas.items %}
+                <div class="rua-section" style="margin-bottom: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; overflow-x: auto;">
+                    <h3 class="rua-title" style="background: #f8f9fa; color: #495057; padding: 0.75rem 1rem; margin: 0; border-bottom: 1px solid #e0e0e0; font-size: 1.2rem; font-weight: 600;">
+                        🛣️ Rua: {{ rua_nome }} ({{ itens|length }} item{{ itens|length|pluralize }})
+                    </h3>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="predio-table" style="margin: 0;">
+                            <thead>
+                                <tr style="background: #f1f3f4;">
+                                    <th>Endereço Completo</th>
+                                    <th>Código</th>
+                                <th>Produto</th>
+                                <th>Peso</th>
+                                <th>Validade 1</th>
+                                <th>Validade 2</th>
+                                <th>Validade 3</th>
+                                <th>Data de Abastecimento</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
+                            <tr>
+                                <td class="nowrap" style="font-weight: 600; color: #495057;">
+                                    Rua {{ item.local.rua }}, Prédio {{ item.local.predio }}, Nível {{ item.local.nivel }}, AP {{ item.local.ap }}
+                                </td>
+                                <td>{{ item.produto.codigo }}</td>
+                                <td class="nowrap">{{ item.produto.nome }}</td>
+                                <td class="nowrap">{{ item.produto.peso }}</td>
+                                <td>
+                                    {% if lotes|length > 0 %}
+                                        {{ lotes.0.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lotes|length > 1 %}
+                                        {{ lotes.1.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lotes|length > 2 %}
+                                        {{ lotes.2.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if lotes and lotes.0.validade <= today %}
+                                        <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
+                                    {% elif lotes and lotes.0.validade <= hoje_mais_30 %}
+                                        <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
+                                    {% else %}
+                                        <span class="ok">Dentro da validade</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions">
+                                    <a href="{% url 'remover_produto' item.id %}"
+                                        onclick="return confirm('Remover este produto do estoque?')">Remover</a>
+                                    {% if lotes|length > 0 %}
+                                        <a href="{% url 'editar_lote' lotes.0.id %}" style="color:#007bff; margin-left:10px;">Editar</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+                {% endfor %} <!-- Fecha loop das ruas -->
+            </div>
+            {% endfor %} <!-- Fecha loop dos prédios -->
+        {% else %}
+            <div style="text-align:center; padding: 40px; color: #666;">
+                <p>Nenhum produto armazenado no estoque.</p>
+            </div>
+        {% endif %}
         {% if messages %}
         <ul>
             {% for message in messages %}

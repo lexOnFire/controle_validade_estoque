@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Importar Abastecimento - Controle de Estoque</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+         <div class="nav-links">
+            <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'painel' %}">📋 Painel</a>
+            <a href="{% url 'importar_produtos_csv' %}">📦 Importar Produtos</a>
+            <a href="{% url 'extrair_produtos_abastecimento' %}">🔧 Extrair Produtos</a>
+            <a href="{% url 'cadastrar_enderecos' %}">🏢 Cadastrar Endereços</a>
+        </div>     margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #28a745;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            border-top: 4px solid #28a745;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .info-box {
+            background: #e8f5e8;
+            border-left: 5px solid #28a745;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-box h3 {
+            color: #155724;
+            margin: 0 0 15px 0;
+        }
+
+        .info-box ul {
+            color: #333;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+        .upload-section {
+            background: #fff;
+            border: 2px dashed #28a745;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #218838;
+            background: #f8fff8;
+        }
+
+        .upload-section.dragover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-block;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .file-label:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .file-name {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .submit-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .submit-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .example-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .example-section h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .example-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .example-table th,
+        .example-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px 10px;
+            text-align: left;
+        }
+
+        .example-table th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .required-fields {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .required-fields h4 {
+            color: #856404;
+            margin: 0 0 10px 0;
+        }
+
+        .field-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .field-item {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Importar Abastecimento</h1>
+            <p>Importe dados completos de estoque via CSV</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'painel' %}">📋 Painel</a>
+            <a href="{% url 'importar_produtos_csv' %}">📦 Importar Produtos</a>
+            <a href="{% url 'cadastrar_enderecos' %}">🏢 Endereços</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_produtos }}</div>
+                <div class="stat-label">Produtos Cadastrados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_estoque }}</div>
+                <div class="stat-label">Itens em Estoque</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_enderecos }}</div>
+                <div class="stat-label">Endereços Cadastrados</div>
+            </div>
+        </div>
+
+        <!-- Mensagens -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Aviso sobre produtos não encontrados -->
+        <div class="warning-box" style="background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #92400e; margin: 0 0 10px 0;">⚠️ Produtos não encontrados?</h4>
+            <p style="color: #92400e; margin: 0 0 10px 0;">Se você receber erro "produtos não foram encontrados", use primeiro a funcionalidade <strong>"Extrair Produtos"</strong> para cadastrar automaticamente todos os produtos do seu CSV.</p>
+            <a href="{% url 'extrair_produtos_abastecimento' %}" style="background: #f59e0b; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; margin-top: 10px;">🔧 Extrair Produtos do CSV</a>
+        </div>
+
+                <div class="required-columns">
+            <h4>📋 Formatos de CSV Aceitos</h4>
+            <p><strong>Formato Completo:</strong> Com todas as colunas de localização</p>
+            <div class="column-list">
+                <div class="column-item required">codigo/cód</div>
+                <div class="column-item required">rua</div> 
+                <div class="column-item required">predio</div>
+                <div class="column-item required">nivel</div>
+                <div class="column-item required">ap</div>
+            </div>
+            
+            <p style="margin-top: 15px;"><strong>Formato Simples (FIFO):</strong> Apenas código do produto</p>
+            <div class="column-list">
+                <div class="column-item required">codigo/cód</div>
+                <div class="column-item optional">produto/nome</div>
+            </div>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                📍 Para formato simples, será usado endereçamento automático: RUA PADRÃO → PREDIO FIFO → N1 → 01-CODIGO
+            </p>
+        </div>
+
+                <div class="info-box">
+            <h3>📋 Instruções para Abastecimento - Formato FIFO Melhorado</h3>
+            <ul>
+                <li><strong>Formato do arquivo:</strong> CSV (separado por vírgulas ou ponto-e-vírgula)</li>
+                <li><strong>Encoding:</strong> UTF-8 com ou sem BOM</li>
+                <li><strong>Produtos:</strong> São cadastrados automaticamente se não existirem</li>
+                <li><strong>Formatos aceitos:</strong>
+                    <ul>
+                        <li><strong>Completo:</strong> código, rua, predio, nivel, ap + opcionais</li>
+                        <li><strong>Simples (FIFO):</strong> apenas código do produto (localização automática)</li>
+                    </ul>
+                </li>
+                <li><strong>Colunas detectadas automaticamente:</strong>
+                    <ul>
+                        <li><strong>Código:</strong> codigo, código, cód, cód., code, id, item, sku</li>
+                        <li><strong>Nome:</strong> nome, produto, descricao, description</li>
+                        <li><strong>Localização:</strong> rua, predio, nivel, ap, corredor, galpão</li>
+                        <li><strong>Opcional:</strong> validade, data_armazenado, lote, quantidade</li>
+                    </ul>
+                </li>
+                <li><strong>Validades:</strong> Múltiplos formatos aceitos (DD/MM/YYYY, YYYY-MM-DD, DD.MM.YYYY, etc.)</li>
+                <li><strong>Produtos sem validade:</strong> São normais e aceitos (alguns produtos não têm data de vencimento)</li>
+                <li><strong>Quantidade:</strong> Se não informada, assume 1 unidade</li>
+                <li><strong>Lote:</strong> Gerado automaticamente se não informado (formato: FIFO-CODIGO-DATA)</li>
+                <li><strong>Alertas:</strong> Criados automaticamente para produtos vencidos ou próximos ao vencimento</li>
+            </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="upload-form">
+            {% csrf_token %}
+            <div class="upload-section" id="upload-area">
+                <div class="upload-icon">📁</div>
+                <h3>Selecione ou arraste seu arquivo de abastecimento CSV</h3>
+                <p>Tamanho máximo: 10MB | Produtos devem estar previamente cadastrados</p>
+                
+                <input type="file" name="csv_file" id="csv-file" class="file-input" accept=".csv" required>
+                <label for="csv-file" class="file-label">
+                    📂 Escolher Arquivo CSV
+                </label>
+                
+                <div id="file-name" class="file-name" style="display: none;"></div>
+                
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        🚀 Abastecer Sistema
+                    </button>
+                </div>
+                
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+        </form>
+
+                <div class="example-section">
+            <h4>📄 Exemplo 1: CSV Completo (com localização)</h4>
+            <table class="example-table">
+                <thead>
+                    <tr>
+                        <th>codigo</th>
+                        <th>rua</th>
+                        <th>predio</th>
+                        <th>nivel</th>
+                        <th>ap</th>
+                        <th>validade</th>
+                        <th>lote</th>
+                        <th>quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>001</td>
+                        <td>Rua A</td>
+                        <td>Predio 1</td>
+                        <td>N1</td>
+                        <td>01</td>
+                        <td>2025-12-31</td>
+                        <td>LT001</td>
+                        <td>50</td>
+                    </tr>
+                    <tr>
+                        <td>002</td>
+                        <td>Rua A</td>
+                        <td>Predio 1</td>
+                        <td>N1</td>
+                        <td>02</td>
+                        <td>31/12/2025</td>
+                        <td>LT002</td>
+                        <td>30</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="example-section" style="margin-top: 20px;">
+            <h4>📄 Exemplo 2: CSV FIFO Simples (só código)</h4>
+            <table class="example-table">
+                <thead>
+                    <tr>
+                        <th>Cód.</th>
+                        <th>Produto</th>
+                        <th>Validade</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>29</td>
+                        <td>ACC SHN MEDIUM PUPPY 15KG</td>
+                        <td>31/12/2025</td>
+                        <td>10</td>
+                    </tr>
+                    <tr>
+                        <td>1358</td>
+                        <td>ACC SHN MINI INDOOR ADULT 2KG</td>
+                        <td>15/01/2026</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>1347</td>
+                        <td>ACC SHN MINI INDOOR PUPPY 2KG</td>
+                        <td></td>
+                        <td>8</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                📍 <strong>Localização automática:</strong> Será criado endereço RUA PADRÃO → PREDIO FIFO → N1 → 01-29, 01-1358, etc.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('csv-file');
+        const fileName = document.getElementById('file-name');
+        const submitBtn = document.getElementById('submit-btn');
+        const uploadArea = document.getElementById('upload-area');
+        const uploadForm = document.getElementById('upload-form');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFill = document.getElementById('progress-fill');
+
+        // Manipular seleção de arquivo
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                fileName.style.display = 'block';
+                submitBtn.style.display = 'inline-block';
+            } else {
+                fileName.style.display = 'none';
+                submitBtn.style.display = 'none';
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Manipular envio do formulário
+        uploadForm.addEventListener('submit', function(e) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Abastecendo Sistema...';
+            progressBar.style.display = 'block';
+            
+            // Simular progresso
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress >= 90) {
+                    progress = 90;
+                    clearInterval(interval);
+                }
+                progressFill.style.width = progress + '%';
+            }, 300);
+        });
+    </script>
+</body>
+</html>

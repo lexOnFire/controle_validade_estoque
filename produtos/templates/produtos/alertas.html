@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Alertas - Controle de Estoque</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            background: #0056b3;
+        }
+
+        .filter-bar {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .alert-item {
+            border-left: 4px solid #007bff;
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .alert-item:hover {
+            transform: translateX(5px);
+        }
+
+        .alert-item.danger {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .alert-item.warning {
+            border-left-color: #ffc107;
+            background: #fffdf5;
+        }
+
+        .alert-item.success {
+            border-left-color: #28a745;
+            background: #f5fff5;
+        }
+
+        .alert-item.lido {
+            opacity: 0.7;
+            background: #f8f9fa;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .alert-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .alert-status.ativo {
+            background: #dc3545;
+            color: white;
+        }
+
+        .alert-status.lido {
+            background: #6c757d;
+            color: white;
+        }
+
+        .alert-message {
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .alert-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .btn-marcar-lido {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .btn-marcar-lido:hover {
+            background: #218838;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 0 4px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a:hover {
+            background: #0056b3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Central de Alertas</h1>
+            <div class="nav-links">
+                <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+                <a href="{% url 'painel' %}">📋 Painel</a>
+                <a href="{% url 'historico_movimentacoes' %}">📈 Histórico</a>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <strong>Filtrar por status:</strong>
+            <a href="?status=ativo" style="padding: 6px 12px; background: {% if status_filtro == 'ativo' %}#007bff{% else %}#6c757d{% endif %}; color: white; text-decoration: none; border-radius: 4px;">
+                Ativos
+            </a>
+            <a href="?status=lido" style="padding: 6px 12px; background: {% if status_filtro == 'lido' %}#007bff{% else %}#6c757d{% endif %}; color: white; text-decoration: none; border-radius: 4px;">
+                Lidos
+            </a>
+            <a href="?status=" style="padding: 6px 12px; background: {% if not status_filtro %}#007bff{% else %}#6c757d{% endif %}; color: white; text-decoration: none; border-radius: 4px;">
+                Todos
+            </a>
+        </div>
+
+        {% if page_obj %}
+            {% for alerta in page_obj %}
+            <div class="alert-item {% if alerta.tipo == 'vencido' %}danger{% elif alerta.tipo == 'vencimento' %}warning{% elif alerta.tipo == 'estoque_baixo' %}warning{% else %}success{% endif %} {% if alerta.status == 'lido' %}lido{% endif %}">
+                <div class="alert-header">
+                    <div class="alert-title">{{ alerta.titulo }}</div>
+                    <div class="alert-status {{ alerta.status }}">{{ alerta.get_status_display }}</div>
+                </div>
+                <div class="alert-message">{{ alerta.mensagem }}</div>
+                <div class="alert-meta">
+                    <span>{{ alerta.data_criacao|date:"d/m/Y H:i" }}</span>
+                    {% if alerta.status == 'ativo' %}
+                    <button class="btn-marcar-lido" onclick="marcarLido({{ alerta.id }})">
+                        ✓ Marcar como Lido
+                    </button>
+                    {% elif alerta.data_leitura %}
+                    <span>Lido em: {{ alerta.data_leitura|date:"d/m/Y H:i" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if status_filtro %}&status={{ status_filtro }}{% endif %}">« Anterior</a>
+                {% endif %}
+                
+                <span style="margin: 0 15px; color: #666;">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if status_filtro %}&status={{ status_filtro }}{% endif %}">Próxima »</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <h3>🎉 Parabéns!</h3>
+                <p>Não há alertas para exibir no momento.</p>
+                <p>Isso significa que seu estoque está bem organizado!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function marcarLido(alertaId) {
+            fetch(`/produtos/alertas/${alertaId}/marcar-lido/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao marcar alerta como lido');
+            });
+        }
+    </script>
+</body>
+</html>

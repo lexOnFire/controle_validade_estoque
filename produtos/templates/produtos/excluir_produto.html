@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excluir Produto - Sistema de Estoque</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            padding-top: 2rem;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: none;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+        }
+        .card-header {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220,53,69,0.4);
+        }
+        .btn-secondary {
+            border-radius: 10px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .warning-box {
+            background: linear-gradient(45deg, rgba(255,193,7,0.1), rgba(255,173,0,0.1));
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #ffc107;
+        }
+        .danger-box {
+            background: linear-gradient(45deg, rgba(220,53,69,0.1), rgba(200,35,51,0.1));
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #dc3545;
+        }
+        .produto-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h2 class="mb-0">
+                                    <i class="fas fa-trash-alt me-2"></i>
+                                    Excluir Produto
+                                </h2>
+                                <p class="mb-0 opacity-75">Confirme a exclusão do produto</p>
+                            </div>
+                            <a href="{% url 'listar_produtos' %}" class="btn btn-light">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Voltar à lista
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Informações do produto -->
+                        <div class="produto-info">
+                            <h5 class="mb-3">
+                                <i class="fas fa-box text-primary me-2"></i>
+                                Produto a ser excluído
+                            </h5>
+                            <div class="info-item">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Código:</strong></div>
+                                    <div class="col-sm-9">
+                                        <code class="badge badge-custom bg-primary">{{ produto.codigo }}</code>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Nome:</strong></div>
+                                    <div class="col-sm-9">{{ produto.nome }}</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Peso/Medida:</strong></div>
+                                    <div class="col-sm-9">{{ produto.peso|default:"Não informado" }}</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Categoria:</strong></div>
+                                    <div class="col-sm-9">
+                                        {% if produto.categoria %}
+                                            <span class="badge badge-custom bg-info">{{ produto.categoria }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Não informada</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Fornecedor:</strong></div>
+                                    <div class="col-sm-9">
+                                        {% if produto.fornecedor %}
+                                            <span class="badge badge-custom bg-success">{{ produto.fornecedor }}</span>  
+                                        {% else %}
+                                            <span class="text-muted">Não informado</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if produto.created_at %}
+                                <div class="info-item">
+                                    <div class="row">
+                                        <div class="col-sm-3"><strong>Cadastrado em:</strong></div>
+                                        <div class="col-sm-9">{{ produto.created_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Verificação de restrições -->
+                        {% if tem_estoque or tem_lotes %}
+                            <div class="danger-box">
+                                <h6 class="text-danger mb-3">
+                                    <i class="fas fa-ban me-2"></i>
+                                    Não é possível excluir este produto
+                                </h6>
+                                <p class="mb-2">Este produto não pode ser excluído pelos seguintes motivos:</p>
+                                <ul class="mb-0">
+                                    {% if tem_estoque %}
+                                        <li><strong>Possui registros de estoque:</strong> Existem itens armazenados deste produto</li>
+                                    {% endif %}
+                                    {% if tem_lotes %}
+                                        <li><strong>Possui lotes cadastrados:</strong> Existem lotes registrados para este produto</li>
+                                    {% endif %}
+                                </ul>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Para excluir este produto, primeiro remova todos os registros de estoque e lotes associados.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Botões quando não pode excluir -->
+                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                <div>
+                                    <a href="{% url 'editar_produto' produto.id %}" class="btn btn-warning">
+                                        <i class="fas fa-edit me-1"></i>
+                                        Editar Produto
+                                    </a>
+                                </div>
+                                <div>
+                                    <a href="{% url 'listar_produtos' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>
+                                        Voltar à Lista
+                                    </a>
+                                </div>
+                            </div>
+
+                        {% else %}
+                            <div class="warning-box">
+                                <h6 class="text-warning mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Atenção! Esta ação não pode ser desfeita
+                                </h6>
+                                <p class="mb-2">Ao excluir este produto:</p>
+                                <ul class="mb-0">
+                                    <li>Todas as informações do produto serão removidas permanentemente</li>
+                                    <li>Não será possível recuperar os dados após a exclusão</li>
+                                    <li>Relatórios históricos que referenciam este produto podem ser afetados</li>
+                                </ul>
+                            </div>
+
+                            <!-- Formulário de confirmação -->
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <div>
+                                        <a href="{% url 'editar_produto' produto.id %}" class="btn btn-warning">
+                                            <i class="fas fa-edit me-1"></i>
+                                            Editar ao invés de excluir
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'listar_produtos' %}" class="btn btn-secondary me-2">
+                                            <i class="fas fa-times me-1"></i>
+                                            Cancelar
+                                        </a>
+                                        <button type="submit" class="btn btn-danger" 
+                                                onclick="return confirm('Tem CERTEZA ABSOLUTA que deseja excluir o produto \'{{ produto.nome }}\'? Esta ação NÃO PODE ser desfeita!')">
+                                            <i class="fas fa-trash-alt me-1"></i>
+                                            Confirmar Exclusão
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

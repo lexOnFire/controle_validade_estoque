@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Controle de Estoque</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: #0056b3;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .stat-card.danger .stat-number { color: #dc3545; }
+        .stat-card.warning .stat-number { color: #ffc107; }
+        .stat-card.success .stat-number { color: #28a745; }
+        .stat-card.info .stat-number { color: #17a2b8; }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .alert-item, .movimento-item {
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .alert-item.danger { border-left-color: #dc3545; }
+        .alert-item.warning { border-left-color: #ffc107; }
+
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .ocupacao-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .ocupacao-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .ocupacao-bar {
+            background: #e9ecef;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .ocupacao-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .ocupacao-fill.low { background: #28a745; }
+        .ocupacao-fill.medium { background: #ffc107; }
+        .ocupacao-fill.high { background: #dc3545; }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Dashboard - Controle de Estoque</h1>
+            <div class="nav-links">
+                <a href="{% url 'painel' %}">📋 Painel</a>
+                <a href="{% url 'alertas' %}">🔔 Alertas</a>
+                <a href="{% url 'historico_movimentacoes' %}">📈 Histórico</a>
+                <a href="{% url 'cadastrar_produto' %}">➕ Cadastrar Produto</a>
+                <a href="{% url 'importar_produtos_csv' %}">📦 Importar CSV</a>
+                <a href="{% url 'cadastrar_enderecos' %}">🏢 Cadastrar Endereço</a>
+            </div>
+        </div>
+
+        <!-- Estatísticas Gerais -->
+        <div class="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-number">{{ stats.total_produtos }}</div>
+                <div class="stat-label">Total de Produtos</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-number">{{ stats.produtos_com_estoque }}</div>
+                <div class="stat-label">Produtos em Estoque</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-number">{{ stats.produtos_vencidos }}</div>
+                <div class="stat-label">Produtos Vencidos</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-number">{{ stats.proximos_vencimento }}</div>
+                <div class="stat-label">Próximos ao Vencimento</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Alertas Ativos -->
+            <div class="card">
+                <div class="card-header">
+                    🔔 Alertas Recentes
+                    <a href="{% url 'alertas' %}" style="float: right; color: #007bff; text-decoration: none; font-size: 0.9rem;">Ver todos</a>
+                </div>
+                <div class="card-body">
+                    {% if alertas_ativos %}
+                        {% for alerta in alertas_ativos %}
+                        <div class="alert-item {% if alerta.tipo == 'vencido' %}danger{% elif alerta.tipo == 'vencimento' %}warning{% endif %}">
+                            <div class="alert-title">{{ alerta.titulo }}</div>
+                            <div class="alert-message">{{ alerta.mensagem }}</div>
+                            <small style="color: #999;">{{ alerta.data_criacao|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            ✅ Nenhum alerta ativo no momento
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Produtos Próximos ao Vencimento -->
+            <div class="card">
+                <div class="card-header">⚠️ Próximos ao Vencimento (7 dias)</div>
+                <div class="card-body">
+                    {% if proximos_vencimento %}
+                        {% for item in proximos_vencimento %}
+                        <div class="alert-item {% if item.dias <= 0 %}danger{% else %}warning{% endif %}">
+                            <div class="alert-title">{{ item.produto.nome }}</div>
+                            <div class="alert-message">
+                                Código: {{ item.produto.codigo }} - 
+                                Vence em: {{ item.validade|date:"d/m/Y" }}
+                                {% if item.dias <= 0 %}
+                                    (VENCIDO)
+                                {% else %}
+                                    ({{ item.dias }} dias)
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            ✅ Nenhum produto próximo ao vencimento
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Ocupação por Prédio -->
+        <div class="card" style="margin-bottom: 30px;">
+            <div class="card-header">🏢 Ocupação por Prédio</div>
+            <div class="card-body">
+                {% if ocupacao_predios %}
+                    <div class="ocupacao-grid">
+                        {% for predio, dados in ocupacao_predios.items %}
+                        <div class="ocupacao-item">
+                            <strong>{{ predio }}</strong>
+                            <div class="ocupacao-bar">
+                                <div class="ocupacao-fill {% if dados.percentual <= 50 %}low{% elif dados.percentual <= 80 %}medium{% else %}high{% endif %}" 
+                                     style="width: {{ dados.percentual }}%"></div>
+                            </div>
+                            <div>{{ dados.ocupados }}/{{ dados.total }} ({{ dados.percentual }}%)</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        📦 Nenhum prédio cadastrado
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Últimas Movimentações -->
+        <div class="card">
+            <div class="card-header">
+                📈 Últimas Movimentações
+                <a href="{% url 'historico_movimentacoes' %}" style="float: right; color: #007bff; text-decoration: none; font-size: 0.9rem;">Ver histórico completo</a>
+            </div>
+            <div class="card-body">
+                {% if ultimas_movimentacoes %}
+                    {% for movimento in ultimas_movimentacoes %}
+                    <div class="movimento-item">
+                        <div class="alert-title">
+                            {{ movimento.get_tipo_operacao_display }} - {{ movimento.produto.nome }}
+                        </div>
+                        <div class="alert-message">
+                            {% if movimento.local_origem %}De: {{ movimento.local_origem }}{% endif %}
+                            {% if movimento.local_destino %}Para: {{ movimento.local_destino }}{% endif %}
+                            {% if movimento.observacoes %} - {{ movimento.observacoes }}{% endif %}
+                        </div>
+                        <small style="color: #999;">{{ movimento.data_operacao|date:"d/m/Y H:i" }} - {{ movimento.usuario }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        📝 Nenhuma movimentação registrada
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Atualizar barras de ocupação com animação
+        window.addEventListener('load', function() {
+            const fills = document.querySelectorAll('.ocupacao-fill');
+            fills.forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0%';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
