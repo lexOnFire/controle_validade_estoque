@@ -21,11 +21,6 @@ class EstoqueTestCase(TestCase):
             codigo="456",
             peso="2kg"
         )
-        self.lote = Lote.objects.create(
-            produto=self.produto,
-            validade=date.today(),
-            numero_lote="L001"
-        )
         self.local = Armazenamento.objects.create(
             rua="A",
             predio="1",
@@ -34,12 +29,12 @@ class EstoqueTestCase(TestCase):
             livre=True
         )
         self.estoque = Estoque.objects.create(
-            lote=self.lote,
+            produto=self.produto,
             local=self.local,
             data_armazenado=date.today()
         )
 
     def test_criar_estoque(self):
         self.assertEqual(Estoque.objects.count(), 1)
-        self.assertEqual(self.estoque.lote.produto.nome, "Produto Estoque")
+        self.assertEqual(self.estoque.produto.nome, "Produto Estoque")
 
