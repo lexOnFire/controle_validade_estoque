@@ -5,28 +5,9 @@ class Produto(models.Model):
     nome = models.CharField(max_length=100)
     codigo = models.CharField(max_length=50, unique=True)
     peso = models.CharField(max_length=50)
-    validade = models.DateField(null=True, blank=True)  # validade principal
-    validade2 = models.DateField(null=True, blank=True)
-    validade3 = models.DateField(null=True, blank=True)
-    quantidade = models.PositiveIntegerField(default=1)
-    data_fabricacao = models.DateField(null=True, blank=True)
-    
+
     def __str__(self):
         return f"{self.nome} ({self.codigo})"
-    
-    def vencido(self):
-        hoje = date.today()
-        return self.validade and self.validade <= hoje
-
-    def proximo_vencimento(self):
-        hoje = date.today()
-        hoje_mais_30 = hoje + timedelta(days=30)
-        return self.validade and hoje < self.validade <= hoje_mais_30
-
-    def primeira_validade(self):
-        """Retorna a data de validade mais próxima"""
-        datas = [d for d in [self.validade, self.validade2, self.validade3] if d]
-        return min(datas) if datas else None
 
 class Lote(models.Model):
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name='lotes')

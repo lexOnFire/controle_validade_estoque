@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório Completo do Estoque</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 1400px; margin: 40px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; overflow-x: auto; }
+        h2 { color: #333; margin-bottom: 24px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 24px; min-width: 1200px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f1f1f1; }
+        tr:hover { background: #f9f9f9; }
+        .actions a { color: #007bff; text-decoration: none; margin-right: 10px; }
+        .actions a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Relatório Completo do Estoque</h2>
+        <div style="margin-bottom: 24px; text-align: right;">
+            <a href="{% url 'painel' %}" style="background:#6c757d;">Voltar para o Painel</a>
+            <a href="{% url 'exportar_estoque' %}" style="background:#007bff;color:#fff;padding:10px 18px;border-radius:4px;text-decoration:none;">Exportar para Excel</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rua</th>
+                    <th>Prédio</th>
+                    <th>Nível</th>
+                    <th>Ap</th>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Validade 1</th>
+                    <th>Validade 2</th>
+                    <th>Validade 3</th>
+                    <th>Data de Abastecimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in estoque %}
+                {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
+                <tr>
+                    <td>{{ item.local.rua }}</td>
+                    <td>{{ item.local.predio }}</td>
+                    <td>{{ item.local.nivel }}</td>
+                    <td>{{ item.local.ap }}</td>
+                    <td>{{ item.produto.codigo }}</td>
+                    <td class="nowrap">{{ item.produto.nome }}</td>
+                    <td>{% if lotes|length > 0 %}{{ lotes.0.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{% if lotes|length > 1 %}{{ lotes.1.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{% if lotes|length > 2 %}{{ lotes.2.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if lotes and lotes.0.validade <= today %}
+                            <span class="vencido">Vencido</span>
+                        {% elif lotes and lotes.0.validade <= hoje_mais_30 %}
+                            <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
+                        {% else %}
+                            <span class="ok">Dentro da validade</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a href="{% url 'remover_produto' item.id %}">Remover</a>
+                        {% if item.produto.codigo %}
+                            <a href="{% url 'cadastrar_produto' %}?codigo={{ item.produto.codigo }}" style="color:#007bff; margin-left:10px;">Editar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="12" style="text-align:center;">Nenhum produto armazenado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

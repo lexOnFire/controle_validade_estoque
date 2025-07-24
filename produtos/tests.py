@@ -24,7 +24,6 @@ class EstoqueTestCase(TestCase):
         self.lote = Lote.objects.create(
             produto=self.produto,
             validade=date.today(),
-            quantidade=10,
             numero_lote="L001"
         )
         self.local = Armazenamento.objects.create(

@@ -11,12 +11,13 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1300px;
             margin: 40px auto;
             background: #fff;
             padding: 32px;
             border-radius: 8px;
             box-shadow: 0 2px 8px #0001;
+            overflow-x: auto;
         }
 
         h2 {
@@ -29,6 +30,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 24px;
+            min-width: 1200px;
         }
 
         th,
@@ -111,8 +113,7 @@
         <div class="top-bar">
             <a href="{% url 'cadastrar_produto' %}">Cadastrar Produto</a>
             <a href="{% url 'cadastrar_enderecos' %}">Cadastrar Endereço</a>
-            <a href="{% url 'relatorio_estoque' %}">Relatório</a>
-            <a href="{% url 'exportar_estoque' %}">Exportar para Excel</a>
+            <a href="{% url 'relatorio_completo' %}">Relatório Completo</a>
         </div>
         <h2>Painel de Estoque</h2>
 
@@ -172,13 +173,13 @@
                     <th>Validade 2</th>
                     <th>Validade 3</th>
                     <th>Data de Abastecimento</th>
-                    <th>Quantidade</th>
                     <th>Status</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in page_obj %}
+                {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
                 <tr>
                     <td>{{ item.local.rua }}</td>
                     <td>{{ item.local.predio }}</td>
@@ -186,40 +187,49 @@
                     <td>{{ item.local.ap }}</td>
                     <td>{{ item.produto.codigo }}</td>
                     <td class="nowrap">{{ item.produto.nome }}</td>
-                    <td>{{ item.produto.validade|date:"d/m/Y" }}</td>
                     <td>
-                        {% if item.produto.validade2 %}
-                        {{ item.produto.validade2|date:"d/m/Y" }}
+                        {% if lotes|length > 0 %}
+                            {{ lotes.0.validade|date:"d/m/Y" }}
                         {% else %}
-                        -
+                            -
                         {% endif %}
                     </td>
                     <td>
-                        {% if item.produto.validade3 %}
-                        {{ item.produto.validade3|date:"d/m/Y" }}
+                        {% if lotes|length > 1 %}
+                            {{ lotes.1.validade|date:"d/m/Y" }}
                         {% else %}
-                        -
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if lotes|length > 2 %}
+                            {{ lotes.2.validade|date:"d/m/Y" }}
+                        {% else %}
+                            -
                         {% endif %}
                     </td>
                     <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
-                    <td>{{ item.produto.quantidade }}</td>
                     <td>
-                        {% if item.produto.vencido %}
-                        <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
-                        {% elif item.produto.proximo_vencimento %}
-                        <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
+                        {% if lotes and lotes.0.validade <= today %}
+                            <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
+                        {% elif lotes and lotes.0.validade <= hoje_mais_30 %}
+                            <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
                         {% else %}
-                        <span class="ok">Dentro da validade</span>
+                            <span class="ok">Dentro da validade</span>
                         {% endif %}
                     </td>
                     <td class="actions">
                         <a href="{% url 'remover_produto' item.id %}"
                             onclick="return confirm('Remover este produto do estoque?')">Remover</a>
+                        {% if lotes|length > 0 %}
+                            <a href="{% url 'editar_lote' lotes.0.id %}" style="color:#007bff; margin-left:10px;">Editar</a>
+                        {% endif %}
                     </td>
                 </tr>
+                {% endwith %}
                 {% empty %}
                 <tr>
-                    <td colspan="13" style="text-align:center;">Nenhum produto armazenado.</td>
+                    <td colspan="12" style="text-align:center;">Nenhum produto armazenado.</td>
                 </tr>
                 {% endfor %}
             </tbody>

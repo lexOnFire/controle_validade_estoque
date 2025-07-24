@@ -4,9 +4,8 @@ from .models import Produto, Estoque, Armazenamento
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nome', 'codigo', 'peso', 'validade', 'validade2', 'validade3', 'quantidade')
+    list_display = ('id', 'nome', 'codigo', 'peso')
     search_fields = ('nome', 'codigo')
-    list_filter = ('validade',)
 
 
 @admin.register(Estoque)

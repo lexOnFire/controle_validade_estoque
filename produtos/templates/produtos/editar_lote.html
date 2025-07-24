@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Lote</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+        h2 { color: #333; margin-bottom: 24px; text-align: center; }
+        form { display: flex; flex-direction: column; gap: 16px; }
+        label { font-weight: bold; }
+        input, button { padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #007bff; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .danger { background: #c00; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Editar Lotes do Produto</h2>
+        <div style="margin-bottom:20px;">
+            <b>Produto:</b> {{ produto.nome }}<br>
+            <b>Código:</b> {{ produto.codigo }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <label for="validade">Validade do lote selecionado:</label>
+            <input type="date" name="validade" id="validade" value="{{ lote.validade|date:'Y-m-d' }}" required>
+            <label for="data_armazenado">Data de Armazenamento:</label>
+            <input type="date" name="data_armazenado" id="data_armazenado" value="{{ data_armazenado|date:'Y-m-d' }}" required>
+            <button type="submit">Salvar Alterações</button>
+        </form>
+        <h3 style="margin-top:30px;">Todas as Validades (FIFO)</h3>
+        <ul style="padding-left:0;">
+            {% for l in lotes %}
+            <li style="margin-bottom:10px;">
+                <b>Lote:</b> {{ l.numero_lote|default:"Sem número" }} - <b>Validade:</b> {{ l.validade|date:"d/m/Y" }} - <b>Quantidade:</b> {{ l.quantidade }}
+                {% if l.id != lote.id %}
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="remover_lote_id" value="{{ l.id }}">
+                    <button type="submit" class="danger" style="margin-left:10px;" onclick="return confirm('Remover esta validade?')">Remover</button>
+                </form>
+                {% endif %}
+                {% if l.id != lote.id %}
+                <a href="{% url 'editar_lote' l.id %}" style="margin-left:10px;">Editar</a>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        <h3 style="margin-top:30px;">Adicionar Nova Validade</h3>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="nova_validade" value="1">
+            <label>Validade:</label>
+            <input type="date" name="nova_validade" required>
+            <label>Número do Lote:</label>
+            <input type="text" name="novo_numero_lote">
+            <label>Quantidade:</label>
+            <input type="number" name="nova_quantidade" min="1" value="1">
+            <button type="submit">Adicionar Validade</button>
+        </form>
+        <div style="margin-top:20px; text-align:center;">
+            <a href="{% url 'painel' %}">Voltar ao Painel</a>
+        </div>
+    </div>
+</body>
+</html>
