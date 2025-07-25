@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Cadastrar Endereço</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
@@ -13,6 +13,84 @@
         button { margin-top: 20px; padding: 10px; background: #28a745; color: #fff; border: none; border-radius: 4px; font-size: 16px; }
         ul { color: #c00; margin-top: 16px; }
         .success { color: #28a745; }
+        
+        /* Estilos para elementos colapsáveis */
+        .rua-content, .predio-content {
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
+        }
+        
+        .collapse-icon {
+            font-size: 14px;
+            transition: transform 0.3s ease-in-out;
+            display: inline-block;
+        }
+        
+        .rua-container h4:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+        }
+        
+        .predio-container h5:hover {
+            background: #e9ecef !important;
+        }
+        
+        /* Estilo para botões de controle */
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .control-buttons button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* Estilos para a nova interface limpa */
+        .endereco-item:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        .dropdown-menu button:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .dropdown-content a:hover,
+        .dropdown-content button:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        /* Barra de ferramentas */
+        .toolbar {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .toolbar-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .toolbar-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -23,7 +101,7 @@
             {% if form.non_field_errors %}
                 <div style="color:#c00; background:#ffeaea; border:1px solid #c00; padding:10px; border-radius:6px; margin-bottom:12px; text-align:center; font-weight:bold;">
                     {% for error in form.non_field_errors %}
-                        {{ error }}<br>
+                        {{ error }}<br />
                     {% endfor %}
                 </div>
             {% endif %}
@@ -75,10 +153,10 @@
             </ul>
             {% if ultimo_endereco %}
                 <div style="margin-top:10px; color:#333; background:#f1f1f1; padding:10px; border-radius:4px;">
-                    <b>Último endereço cadastrado:</b><br>
-                    Rua: {{ ultimo_endereco.rua }}<br>
-                    Prédio: {{ ultimo_endereco.predio }}<br>
-                    Nível: {{ ultimo_endereco.nivel }}<br>
+                    <b>Último endereço cadastrado:</b><br />
+                    Rua: {{ ultimo_endereco.rua }}<br />
+                    Prédio: {{ ultimo_endereco.predio }}<br />
+                    Nível: {{ ultimo_endereco.nivel }}<br />
                     Ap: {{ ultimo_endereco.ap }}
                 </div>
             {% endif %}
@@ -87,69 +165,171 @@
             <button type="submit" style="background:#007bff; color:#fff; padding:10px 18px; border-radius:4px; border:none; font-size:15px;">Ir para o Painel</button>
         </form>
 
-        <hr style="margin:30px 0;">
-        <h3 style="margin-bottom:20px;">Endereços cadastrados</h3>
+        <hr style="margin:30px 0;" />
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+                <h3 style="margin: 0;">Endereços cadastrados</h3>
+                <div id="resumo-visibilidade" style="font-size: 12px; color: #6c757d; margin-top: 4px;">
+                    <span id="contador-enderecos"></span>
+                </div>
+            </div>
+            <div class="control-buttons">
+                <button type="button" onclick="expandirTodos()" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                    📂 Expandir Todos
+                </button>
+                <button type="button" onclick="colapsarTodos()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.2s;">
+                    📁 Colapsar Todos
+                </button>
+            </div>
+        </div>
         
         {% if enderecos_agrupados %}
-            <form method="post" id="form-excluir-multiplos" onsubmit="return confirm('Excluir os endereços selecionados?');">
-                {% csrf_token %}
+            <!-- Barra de Ferramentas Consolidada -->
+            <div class="toolbar">
+                <form method="post" id="form-acoes-lote">
+                    {% csrf_token %}
+                    
+                    <!-- Seção de Seleção -->
+                    <div class="toolbar-section">
+                        <span class="toolbar-label">🎯 Seleção:</span>
+                        <div class="btn-group">
+                            <button type="button" onclick="toggleTodos(null)" style="background: #17a2b8; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                ☑️ Todos
+                            </button>
+                            <button type="button" onclick="desmarcarTodos()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                ❌ Nenhum
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Visualização -->
+                    <div class="toolbar-section">
+                        <span class="toolbar-label">👁️ Visualização:</span>
+                        <div class="btn-group">
+                            <button type="button" onclick="expandirTodos()" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                📂 Expandir
+                            </button>
+                            <button type="button" onclick="colapsarTodos()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                📁 Colapsar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Ações em Lote -->
+                    <div class="toolbar-section">
+                        <span class="toolbar-label">⚡ Ações em Lote:</span>
+                        <div class="btn-group">
+                            <select name="novo_tipo" id="novo_tipo" style="padding: 6px 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px;">
+                                <option value="">Alterar tipo para...</option>
+                                <option value="inteiro">🔵 Inteiro (Palete)</option>
+                                <option value="meio">🟡 Meio (Saída)</option>
+                            </select>
+                            <button type="button" onclick="alterarTiposLote()" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                🔄 Alterar
+                            </button>
+                            <button type="submit" name="excluir_multiplos" onclick="return confirm('Excluir os enderecos selecionados')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                🗑️ Excluir
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
                 
                 {% for rua_nome, predios in enderecos_agrupados.items %}
-                <div style="margin-bottom: 30px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-                    <h4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; margin: 0; font-size: 16px;">
-                        🛣️ Rua: {{ rua_nome }}
+                <div style="margin-bottom: 30px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;" class="rua-container">
+                    <h4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; margin: 0; font-size: 16px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center;" 
+                        onclick="toggleRua('rua-{{ forloop.counter }}')" 
+                        data-rua="rua-{{ forloop.counter }}">
+                        <span>🛣️ Rua: {{ rua_nome }} ({{ predios.values|length }} prédio{{ predios.values|length|pluralize }})</span>
+                        <span class="collapse-icon" id="icon-rua-{{ forloop.counter }}">🔽</span>
                     </h4>
                     
-                    {% for predio_nome, enderecos in predios.items %}
-                    <div style="margin: 15px; border: 1px solid #dee2e6; border-radius: 6px;">
-                        <h5 style="background: #f8f9fa; padding: 8px 12px; margin: 0; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057;">
-                            🏢 Prédio: {{ predio_nome }} ({{ enderecos|length }} endereço{{ enderecos|length|pluralize }})
-                        </h5>
-                        
-                        <table style="width:100%; border-collapse:collapse; margin: 0;">
-                            <thead>
-                                <tr style="background:#f1f3f4; font-size: 12px;">
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;"><input type="checkbox" class="select-grupo" onclick="toggleGrupo(this, '{{ rua_nome }}-{{ predio_nome }}')"></th>
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Tipo</th>
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Nível</th>
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Apartamento</th>
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Capacidade</th>
-                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for endereco in enderecos %}
-                                <tr style="font-size: 13px;">
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;"><input type="checkbox" name="excluir_endereco_ids" value="{{ endereco.id }}" class="cb-endereco cb-{{ rua_nome }}-{{ predio_nome }}"></td>
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">
-                                        {% if endereco.categoria_armazenamento == 'inteiro' %}
-                                            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: bold;">Inteiro</span>
-                                        {% else %}
-                                            <span style="background: #fff3e0; color: #f57c00; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: bold;">Meio</span>
-                                        {% endif %}
-                                    </td>
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.nivel }}</td>
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.ap }}</td>
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.capacidade_maxima }}</td>
-                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">
-                                        <button type="button" onclick="marcarExcluir('{{ endereco.id }}')" style="background:#dc3545; color:#fff; border:none; border-radius:3px; padding:4px 8px; cursor:pointer; font-size: 11px; margin-right: 4px;">Excluir</button>
-                                        <a href="{% url 'editar_endereco' endereco.id %}" style="background:#007bff; color:#fff; border-radius:3px; padding:4px 8px; text-decoration:none; font-size:11px;">Editar</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div id="rua-{{ forloop.counter }}" class="rua-content">
+                        {% for predio_nome, enderecos in predios.items %}
+                        <div style="margin: 15px; border: 1px solid #dee2e6; border-radius: 6px;" class="predio-container">
+                            <h5 style="background: #f8f9fa; padding: 8px 12px; margin: 0; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center;" 
+                                onclick="togglePredio('predio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}')"
+                                data-predio="predio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                <span>🏢 Prédio: {{ predio_nome }} ({{ enderecos|length }} endereço{{ enderecos|length|pluralize }})</span>
+                                <span class="collapse-icon" id="icon-predio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">🔽</span>
+                            </h5>
+                            
+                            <div id="predio-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="predio-content">
+                                <!-- Header com checkbox de seleção do grupo -->
+                                <div style="background: #f8f9fa; padding: 8px 12px; border-bottom: 1px solid #dee2e6; display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" class="select-grupo" onclick="toggleGrupo(this, '{{ rua_nome }}-{{ predio_nome }}')" style="margin: 0;" />
+                                    <span style="font-size: 12px; color: #6c757d; font-weight: bold;">Selecionar todos os endereços deste prédio</span>
+                                </div>
+                                
+                                <!-- Lista de endereços -->
+                                <div style="background: #fff;">
+                                    {% for endereco in enderecos %}
+                                    <div style="display: flex; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f0f0f0; {% if forloop.last %}border-bottom: none;{% endif %}" 
+                                         class="endereco-item"
+                                         onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='#fff'">
+                                        
+                                        <!-- Checkbox -->
+                                        <div style="flex: 0 0 auto; margin-right: 15px;">
+                                            <input type="checkbox" name="excluir_endereco_ids" value="{{ endereco.id }}" class="cb-endereco cb-{{ rua_nome }}-{{ predio_nome }}" style="margin: 0;" />
+                                        </div>
+                                        
+                                        <!-- Badge do tipo -->
+                                        <div style="flex: 0 0 auto; margin-right: 15px;">
+                                            {% if endereco.categoria_armazenamento == 'inteiro' %}
+                                                <span style="background: #e3f2fd; color: #1976d2; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">🔵 Inteiro</span>
+                                            {% else %}
+                                                <span style="background: #fff3e0; color: #f57c00; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">🟡 Meio</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <!-- Informações do endereço -->
+                                        <div style="flex: 1; display: flex; align-items: center; gap: 20px; font-size: 13px;">
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: #6c757d; font-weight: 500;">Nível:</span>
+                                                <span style="color: #333; font-weight: bold;">{{ endereco.nivel }}</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: #6c757d; font-weight: 500;">Ap:</span>
+                                                <span style="color: #333; font-weight: bold;">{{ endereco.ap }}</span>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 4px;">
+                                                <span style="color: #6c757d; font-weight: 500;">Capacidade:</span>
+                                                <span style="color: #333; font-weight: bold;">{{ endereco.capacidade_maxima }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Menu de ações compacto -->
+                                        <div style="flex: 0 0 auto; position: relative;">
+                                            <div class="dropdown-menu" style="position: relative; display: inline-block;">
+                                                <button type="button" onclick="toggleDropdown({{ endereco.id }})" 
+                                                        style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
+                                                        onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='#f8f9fa'">
+                                                    ⚙️ <span style="font-size: 10px;">▼</span>
+                                                </button>
+                                                <div id="dropdown-{{ endereco.id }}" class="dropdown-content" 
+                                                     style="display: none; position: absolute; right: 0; top: 100%; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 6px; z-index: 1000; min-width: 130px; border: 1px solid #dee2e6;">
+                                                    <a href="{% url 'editar_endereco' endereco.id %}" 
+                                                       style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; text-decoration: none; color: #495057; font-size: 12px; border-bottom: 1px solid #f0f0f0;"
+                                                       onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'">
+                                                        ✏️ Editar
+                                                    </a>
+                                                    <button type="button" onclick="marcarExcluir('{{ endereco.id }}')" 
+                                                            style="width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: none; border: none; padding: 10px 12px; color: #dc3545; font-size: 12px; cursor: pointer;"
+                                                            onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'">
+                                                        🗑️ Excluir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
                 {% endfor %}
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <input type="checkbox" id="select-all" onclick="toggleTodos(this)" style="margin-right: 8px;">
-                    <label for="select-all" style="margin-right: 15px;">Selecionar todos</label>
-                    <button type="submit" name="excluir_multiplos" style="background:#dc3545; color:#fff; border:none; border-radius:4px; padding:10px 20px; cursor:pointer; font-weight: bold;">🗑️ Excluir Selecionados</button>
-                </div>
-            </form>
         {% else %}
             <div style="text-align:center; padding: 40px; color: #666; background: #f8f9fa; border-radius: 8px;">
                 <p>Nenhum endereço cadastrado ainda.</p>
@@ -157,11 +337,209 @@
         {% endif %}
         
         <script>
+        // Funções de colapso/expansão
+        function atualizarContador() {
+            var totalRuas = document.querySelectorAll('.rua-container').length;
+            var ruasVisiveis = document.querySelectorAll('.rua-content[style*="display: block"], .rua-content:not([style*="display: none"])').length;
+            var ruasOcultas = totalRuas - ruasVisiveis;
+            
+            var totalPredios = document.querySelectorAll('.predio-container').length;
+            var prediosVisiveis = document.querySelectorAll('.predio-content[style*="display: block"], .predio-content:not([style*="display: none"])').length;
+            var prediosOcultos = totalPredios - prediosVisiveis;
+            
+            var contador = document.getElementById('contador-enderecos');
+            if (contador) {
+                if (ruasOcultas === 0) {
+                    contador.innerHTML = '📊 ' + totalRuas + ' ruas, ' + totalPredios + ' predios - Tudo expandido';
+                } else if (ruasVisiveis === 0) {
+                    contador.innerHTML = '📁 ' + totalRuas + ' ruas colapsadas';
+                } else {
+                    contador.innerHTML = '📊 ' + ruasVisiveis + '/' + totalRuas + ' ruas visiveis, ' + prediosVisiveis + '/' + totalPredios + ' predios visiveis';
+                }
+            }
+        }
+        
+        // Funções de dropdown
+        function toggleDropdown(id) {
+            // Fechar todos os outros dropdowns
+            var dropdowns = document.querySelectorAll('.dropdown-content');
+            dropdowns.forEach(function(dd) {
+                if (dd.id !== 'dropdown-' + id) {
+                    dd.style.display = 'none';
+                }
+            });
+            
+            // Toggle do dropdown atual
+            var dropdown = document.getElementById('dropdown-' + id);
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+        
+        // Fechar dropdowns ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!event.target.matches('.dropdown-menu button')) {
+                var dropdowns = document.querySelectorAll('.dropdown-content');
+                dropdowns.forEach(function(dd) {
+                    dd.style.display = 'none';
+                });
+            }
+        });
+        
+        // Novas funções da barra de ferramentas
+        function desmarcarTodos() {
+            var checkboxes = document.querySelectorAll('input.cb-endereco');
+            var grupoCheckboxes = document.querySelectorAll('.select-grupo');
+            
+            checkboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+            
+            grupoCheckboxes.forEach(function(cb) {
+                cb.checked = false;
+            });
+        }
+        
+        function alterarTiposLote() {
+            var checkboxes = document.querySelectorAll('input.cb-endereco:checked');
+            var novoTipo = document.getElementById('novo_tipo').value;
+            
+            if (checkboxes.length === 0) {
+                alert('⚠️ Selecione pelo menos um endereco para alterar.');
+                return false;
+            }
+            
+            if (!novoTipo) {
+                alert('⚠️ Selecione o novo tipo de armazenamento.');
+                return false;
+            }
+            
+            var tipoNome = novoTipo === 'inteiro' ? '🔵 Inteiro (Palete Fechado)' : '🟡 Meio (Saida)';
+            var confirmacao = confirm('🔄 Alterar ' + checkboxes.length + ' endereco(s) para "' + tipoNome + '"\n\n⚠️ Apenas enderecos vazios (sem produtos) serao alterados.');
+            
+            if (confirmacao) {
+                // Criar form para envio
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{% url "alterar_tipos_lote" %}';
+                
+                // CSRF Token
+                var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                // Novo tipo
+                var tipoInput = document.createElement('input');
+                tipoInput.type = 'hidden';
+                tipoInput.name = 'novo_tipo';
+                tipoInput.value = novoTipo;
+                form.appendChild(tipoInput);
+                
+                // IDs dos endereços
+                checkboxes.forEach(function(cb) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'endereco_ids';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function toggleRua(ruaId) {
+            var content = document.getElementById(ruaId);
+            var icon = document.getElementById('icon-' + ruaId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '🔽';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▶️';
+            }
+            atualizarContador();
+        }
+        
+        function togglePredio(predioId) {
+            var content = document.getElementById(predioId);
+            var icon = document.getElementById('icon-' + predioId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '🔽';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▶️';
+            }
+            atualizarContador();
+        }
+        
+        function expandirTodos() {
+            // Expandir todas as ruas
+            var ruasContent = document.querySelectorAll('.rua-content');
+            var ruasIcons = document.querySelectorAll('.rua-container .collapse-icon');
+            
+            ruasContent.forEach(function(content) {
+                content.style.display = 'block';
+            });
+            
+            ruasIcons.forEach(function(icon) {
+                if (icon.id.startsWith('icon-rua-')) {
+                    icon.textContent = '🔽';
+                }
+            });
+            
+            // Expandir todos os prédios
+            var prediosContent = document.querySelectorAll('.predio-content');
+            var prediosIcons = document.querySelectorAll('.predio-container .collapse-icon');
+            
+            prediosContent.forEach(function(content) {
+                content.style.display = 'block';
+            });
+            
+            prediosIcons.forEach(function(icon) {
+                if (icon.id.startsWith('icon-predio-')) {
+                    icon.textContent = '🔽';
+                }
+            });
+            
+            atualizarContador();
+        }
+        
+        function colapsarTodos() {
+            // Colapsar todas as ruas
+            var ruasContent = document.querySelectorAll('.rua-content');
+            var ruasIcons = document.querySelectorAll('.rua-container .collapse-icon');
+            
+            ruasContent.forEach(function(content) {
+                content.style.display = 'none';
+            });
+            
+            ruasIcons.forEach(function(icon) {
+                if (icon.id.startsWith('icon-rua-')) {
+                    icon.textContent = '▶️';
+                }
+            });
+            
+            atualizarContador();
+        }
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarContador();
+        });
+        
         function marcarExcluir(id) {
             var cb = document.querySelector('input.cb-endereco[value="'+id+'"]');
             if(cb) {
                 cb.checked = true;
-                document.getElementById('form-excluir-multiplos').submit();
+                document.getElementById('form-acoes-lote').submit();
             }
         }
         
@@ -177,11 +555,11 @@
             var grupoCheckboxes = document.getElementsByClassName('select-grupo');
             
             for(var i = 0; i < checkboxes.length; i++) {
-                checkboxes[i].checked = checkbox.checked;
+                checkboxes[i].checked = checkbox ? checkbox.checked : true;
             }
             
             for(var i = 0; i < grupoCheckboxes.length; i++) {
-                grupoCheckboxes[i].checked = checkbox.checked;
+                grupoCheckboxes[i].checked = checkbox ? checkbox.checked : true;
             }
         }
         </script>

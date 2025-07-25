@@ -1455,3 +1455,55 @@ def alterar_tipo_endereco(request, endereco_id):
         messages.error(request, f'Erro ao alterar tipo do endereço: {str(e)}')
     
     return redirect('painel')
+
+def alterar_tipos_lote(request):
+    """Altera o tipo de armazenamento de múltiplos endereços"""
+    if request.method == 'POST':
+        endereco_ids = request.POST.getlist('endereco_ids')
+        novo_tipo = request.POST.get('novo_tipo')
+        
+        if not endereco_ids:
+            messages.error(request, 'Nenhum endereço foi selecionado.')
+            return redirect('cadastrar_enderecos')
+            
+        if novo_tipo not in ['inteiro', 'meio']:
+            messages.error(request, 'Tipo de armazenamento inválido.')
+            return redirect('cadastrar_enderecos')
+        
+        # Verificar quais endereços têm produtos
+        enderecos_com_produtos = []
+        enderecos_vazios = []
+        
+        for endereco_id in endereco_ids:
+            try:
+                endereco = Armazenamento.objects.get(id=endereco_id)
+                ocupacao = Estoque.objects.filter(local=endereco).count()
+                
+                if ocupacao > 0:
+                    enderecos_com_produtos.append(f"{endereco} ({ocupacao} produtos)")
+                else:
+                    enderecos_vazios.append(endereco)
+            except Armazenamento.DoesNotExist:
+                continue
+        
+        # Alertar sobre endereços com produtos
+        if enderecos_com_produtos:
+            messages.warning(request, 
+                f'Os seguintes endereços não foram alterados por possuírem produtos: {", ".join(enderecos_com_produtos[:3])}' +
+                (f' e mais {len(enderecos_com_produtos) - 3}' if len(enderecos_com_produtos) > 3 else ''))
+        
+        # Alterar apenas os endereços vazios
+        if enderecos_vazios:
+            tipo_nome = 'Palete Fechado (Nível 2)' if novo_tipo == 'inteiro' else 'Saída (Nível 0)'
+            
+            for endereco in enderecos_vazios:
+                endereco.categoria_armazenamento = novo_tipo
+                endereco.save()
+            
+            messages.success(request, 
+                f'{len(enderecos_vazios)} endereço(s) alterado(s) para "{tipo_nome}" com sucesso!')
+        
+        if not enderecos_vazios and not enderecos_com_produtos:
+            messages.info(request, 'Nenhum endereço válido foi encontrado para alteração.')
+    
+    return redirect('cadastrar_enderecos')

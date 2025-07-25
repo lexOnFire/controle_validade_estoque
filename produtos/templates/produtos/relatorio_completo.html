@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Relatório Completo do Estoque</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f8f9fa; }
@@ -56,7 +56,7 @@
                             <form method="post" action="{% url 'editar_lote' lotes.0.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <span>{{ lotes.0.validade|date:"d/m/Y" }}</span>
-                                <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick=\"return confirm('Confirmar acao?')\">x</button>
                             </form>
                         {% else %}-{% endif %}
                     </td>
@@ -65,7 +65,7 @@
                             <form method="post" action="{% url 'editar_lote' lotes.1.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <span>{{ lotes.1.validade|date:"d/m/Y" }}</span>
-                                <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick=\"return confirm('Confirmar acao?')\">x</button>
                             </form>
                         {% else %}-{% endif %}
                     </td>
@@ -74,7 +74,7 @@
                             <form method="post" action="{% url 'editar_lote' lotes.2.id %}" style="display:inline;">
                                 {% csrf_token %}
                                 <span>{{ lotes.2.validade|date:"d/m/Y" }}</span>
-                                <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick=\"return confirm('Confirmar acao?')\">x</button>
                             </form>
                         {% else %}-{% endif %}
                     </td>

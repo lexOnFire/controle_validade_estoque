@@ -12,6 +12,7 @@ urlpatterns = [
     path('remover/<int:estoque_id>/',views.remover_produto,name='remover_produto'),
     path('marcar-saida/<int:estoque_id>/', views.marcar_saida, name='marcar_saida'),
     path('alterar-tipo-endereco/<int:endereco_id>/', views.alterar_tipo_endereco, name='alterar_tipo_endereco'),
+    path('alterar-tipos-lote/', views.alterar_tipos_lote, name='alterar_tipos_lote'),
     path('cadastrar_produto/',cadastrar_produto,name='cadastrar_produto'),
     path('listar-produtos/', views.listar_produtos, name='listar_produtos'),
     path('editar-produto/<int:produto_id>/', views.editar_produto, name='editar_produto'),

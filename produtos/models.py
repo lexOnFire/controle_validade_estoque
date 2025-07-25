@@ -117,6 +117,26 @@ class Armazenamento(models.Model):
     class Meta:
         ordering = ['predio', 'rua', 'nivel', 'ap']
 
+    def clean(self):
+        """Validação customizada para endereços"""
+        super().clean()
+        
+        # Regra: Nível 0 deve sempre ser 'meio' (área de saída)
+        if str(self.nivel) == '0' and self.categoria_armazenamento != 'meio':
+            raise ValidationError({
+                'categoria_armazenamento': 'Endereços no nível 0 devem ser do tipo "meio" (área de saída).'
+            })
+    
+    def save(self, *args, **kwargs):
+        """Auto-correção: força nível 0 como 'meio'"""
+        # Garantir que nível 0 seja sempre 'meio'
+        if str(self.nivel) == '0':
+            self.categoria_armazenamento = 'meio'
+        
+        # Executar validação antes de salvar
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.rua} - {self.predio} - {self.nivel} - {self.ap}"
     
