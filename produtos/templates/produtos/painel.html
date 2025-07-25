@@ -349,6 +349,7 @@
                                 <tr style="background: #f1f3f4;">
                                     <th>Endereço Completo</th>
                                     <th>Código</th>
+                                    <th>Categoria</th>
                                 <th>Produto</th>
                                 <th>Peso</th>
                                 <th>Validade 1</th>
@@ -364,31 +365,52 @@
                             {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
                             <tr>
                                 <td class="nowrap" style="font-weight: 600; color: #495057;">
-                                    Rua {{ item.local.rua }}, Prédio {{ item.local.predio }}, Nível {{ item.local.nivel }}, AP {{ item.local.ap }}
+                                    {{ item.local.rua }}, {{ item.local.predio }}, {{ item.local.nivel }}, {{ item.local.ap }}
                                 </td>
-                                <td>{{ item.produto.codigo }}</td>
+                                <td>
+                                    {{ item.produto.codigo }}
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'editar_endereco' item.local.id %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <select name="categoria_armazenamento" style="font-size:0.95em;">
+                                            <option value="inteiro" {% if item.local.categoria_armazenamento == 'inteiro' %}selected{% endif %}>Inteiro</option>
+                                            <option value="meio" {% if item.local.categoria_armazenamento == 'meio' %}selected{% endif %}>Meio</option>
+                                        </select>
+                                        <button type="submit" style="background:#007bff;color:#fff;border:none;padding:2px 8px;border-radius:3px;font-size:0.95em;cursor:pointer;">Salvar</button>
+                                    </form>
+                                    {% if item.local.categoria_armazenamento %}
+                                        <span style="font-size:0.9em;color:#888;">({{ item.local.get_categoria_armazenamento_display }})</span>
+                                    {% endif %}
+                                </td>
                                 <td class="nowrap">{{ item.produto.nome }}</td>
                                 <td class="nowrap">{{ item.produto.peso }}</td>
                                 <td>
                                     {% if lotes|length > 0 %}
-                                        {{ lotes.0.validade|date:"d/m/Y" }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.0.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.0.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                        </form>
+                                    {% else %}-{% endif %}
                                 </td>
                                 <td>
                                     {% if lotes|length > 1 %}
-                                        {{ lotes.1.validade|date:"d/m/Y" }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.1.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.1.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                        </form>
+                                    {% else %}-{% endif %}
                                 </td>
                                 <td>
                                     {% if lotes|length > 2 %}
-                                        {{ lotes.2.validade|date:"d/m/Y" }}
-                                    {% else %}
-                                        -
-                                    {% endif %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.2.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.2.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                                        </form>
+                                    {% else %}-{% endif %}
                                 </td>
                                 <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
                                 <td>

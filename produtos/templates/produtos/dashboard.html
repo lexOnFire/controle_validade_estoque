@@ -249,7 +249,11 @@
                         <div class="alert-item {% if item.dias <= 0 %}danger{% else %}warning{% endif %}">
                             <div class="alert-title">{{ item.produto.nome }}</div>
                             <div class="alert-message">
-                                Código: {{ item.produto.codigo }} - 
+                                Código: {{ item.produto.codigo }}
+                                {% if item.local.categoria_armazenamento %}
+                                    <span style="font-size:0.9em;color:#888;">({{ item.local.get_categoria_armazenamento_display }})</span>
+                                {% endif %}
+                                - 
                                 Vence em: {{ item.validade|date:"d/m/Y" }}
                                 {% if item.dias <= 0 %}
                                     (VENCIDO)

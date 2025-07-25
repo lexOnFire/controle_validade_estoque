@@ -48,12 +48,36 @@
                     <td>{{ item.local.predio }}</td>
                     <td>{{ item.local.nivel }}</td>
                     <td>{{ item.local.ap }}</td>
-                    <td>{{ item.produto.codigo }}</td>
+            <td>   
                     <td class="nowrap">{{ item.produto.nome }}</td>
                     <td class="nowrap">{{ item.produto.peso }}</td>
-                    <td>{% if lotes|length > 0 %}{{ lotes.0.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
-                    <td>{% if lotes|length > 1 %}{{ lotes.1.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
-                    <td>{% if lotes|length > 2 %}{{ lotes.2.validade|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>
+                        {% if lotes|length > 0 %}
+                            <form method="post" action="{% url 'editar_lote' lotes.0.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <span>{{ lotes.0.validade|date:"d/m/Y" }}</span>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                            </form>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if lotes|length > 1 %}
+                            <form method="post" action="{% url 'editar_lote' lotes.1.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <span>{{ lotes.1.validade|date:"d/m/Y" }}</span>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                            </form>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if lotes|length > 2 %}
+                            <form method="post" action="{% url 'editar_lote' lotes.2.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <span>{{ lotes.2.validade|date:"d/m/Y" }}</span>
+                                <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
+                            </form>
+                        {% else %}-{% endif %}
+                    </td>
                     <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
                     <td>
                         {% if lotes and lotes.0.validade <= today %}

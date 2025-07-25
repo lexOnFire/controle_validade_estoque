@@ -101,6 +101,11 @@ class Lote(models.Model):
             return 'valido'
 
 class Armazenamento(models.Model):
+    CATEGORIA_CHOICES = [
+        ('inteiro', 'Palete Fechado (Nível 2)'),
+        ('meio', 'Saída (Nível 0)'),
+    ]
+    categoria_armazenamento = models.CharField(max_length=10, choices=CATEGORIA_CHOICES, default='inteiro')
     rua = models.CharField(max_length=50)
     predio = models.CharField(max_length=50)
     nivel = models.CharField(max_length=10)
