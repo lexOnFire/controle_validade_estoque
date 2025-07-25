@@ -1305,3 +1305,76 @@ def extrair_produtos_abastecimento(request):
     return render(request, 'produtos/extrair_produtos_abastecimento.html', {
         'total_produtos': total_produtos
     })
+
+def marcar_saida(request, estoque_id):
+    """Marca um produto como saída, transferindo de 'inteiro' para 'meio'"""
+    try:
+        estoque = get_object_or_404(Estoque, id=estoque_id)
+        
+        # Verifica se o produto está atualmente como 'inteiro'
+        if estoque.local.categoria_armazenamento != 'inteiro':
+            messages.warning(request, 'Este produto já está marcado como saída.')
+            return redirect('painel')
+        
+        # Procura por um local de saída (categoria 'meio') disponível
+        # Preferencialmente na mesma rua e prédio
+        local_saida = Armazenamento.objects.filter(
+            categoria_armazenamento='meio',
+            rua=estoque.local.rua,
+            predio=estoque.local.predio,
+            livre=True
+        ).first()
+        
+        # Se não encontrou na mesma rua/prédio, procura qualquer local de saída disponível
+        if not local_saida:
+            local_saida = Armazenamento.objects.filter(
+                categoria_armazenamento='meio',
+                livre=True
+            ).first()
+        
+        # Se ainda não encontrou, cria um novo local de saída no nível 0
+        if not local_saida:
+            local_saida = Armazenamento.objects.create(
+                categoria_armazenamento='meio',
+                rua=estoque.local.rua,
+                predio=estoque.local.predio,
+                nivel='0',
+                ap=f'SAIDA-{estoque.local.rua}-{estoque.local.predio}',
+                livre=True,
+                capacidade_maxima=100,  # Capacidade maior para área de saída
+                observacoes='Local de saída criado automaticamente'
+            )
+        
+        # Registra a movimentação no histórico
+        HistoricoMovimentacao.objects.create(
+            produto=estoque.produto,
+            tipo_operacao='saida',
+            local_origem=estoque.local,
+            local_destino=local_saida,
+            data_operacao=date.today(),
+            usuario_responsavel=request.user.username if request.user.is_authenticated else 'Sistema',
+            observacoes=f'Produto marcado como saída - transferido de {estoque.local} para {local_saida}'
+        )
+        
+        # Atualiza o local do estoque
+        estoque_antigo = estoque.local
+        estoque.local = local_saida
+        estoque.data_armazenado = date.today()
+        estoque.observacoes = f'Transferido para saída em {date.today().strftime("%d/%m/%Y")}'
+        estoque.save()
+        
+        # Marca local antigo como livre se não houver mais produtos
+        if not Estoque.objects.filter(local=estoque_antigo).exists():
+            estoque_antigo.livre = True
+            estoque_antigo.save()
+        
+        # Marca novo local como ocupado
+        local_saida.livre = False
+        local_saida.save()
+        
+        messages.success(request, f'Produto "{estoque.produto.nome}" marcado como saída com sucesso!')
+        
+    except Exception as e:
+        messages.error(request, f'Erro ao marcar produto como saída: {str(e)}')
+    
+    return redirect('painel')

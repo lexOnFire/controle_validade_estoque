@@ -112,16 +112,17 @@
         }
 
         /* Definir larguras específicas para as colunas */
-        .predio-table th:nth-child(1), .predio-table td:nth-child(1) { width: 25%; } /* Endereço Completo */
-        .predio-table th:nth-child(2), .predio-table td:nth-child(2) { width: 8%; }  /* Código */
-        .predio-table th:nth-child(3), .predio-table td:nth-child(3) { width: 20%; } /* Produto */
-        .predio-table th:nth-child(4), .predio-table td:nth-child(4) { width: 8%; }  /* Peso */
-        .predio-table th:nth-child(5), .predio-table td:nth-child(5) { width: 9%; }  /* Validade 1 */
-        .predio-table th:nth-child(6), .predio-table td:nth-child(6) { width: 9%; }  /* Validade 2 */
-        .predio-table th:nth-child(7), .predio-table td:nth-child(7) { width: 9%; }  /* Validade 3 */
-        .predio-table th:nth-child(8), .predio-table td:nth-child(8) { width: 12%; } /* Data Abastecimento */
-        .predio-table th:nth-child(9), .predio-table td:nth-child(9) { width: 12%; } /* Status */
-        .predio-table th:nth-child(10), .predio-table td:nth-child(10) { width: 15%; } /* Ações */
+        .predio-table th:nth-child(1), .predio-table td:nth-child(1) { width: 22%; } /* Endereço Completo */
+        .predio-table th:nth-child(2), .predio-table td:nth-child(2) { width: 8%; }  /* Tipo */
+        .predio-table th:nth-child(3), .predio-table td:nth-child(3) { width: 7%; }  /* Código */
+        .predio-table th:nth-child(4), .predio-table td:nth-child(4) { width: 18%; } /* Produto */
+        .predio-table th:nth-child(5), .predio-table td:nth-child(5) { width: 7%; }  /* Peso */
+        .predio-table th:nth-child(6), .predio-table td:nth-child(6) { width: 8%; }  /* Validade 1 */
+        .predio-table th:nth-child(7), .predio-table td:nth-child(7) { width: 8%; }  /* Validade 2 */
+        .predio-table th:nth-child(8), .predio-table td:nth-child(8) { width: 8%; }  /* Validade 3 */
+        .predio-table th:nth-child(9), .predio-table td:nth-child(9) { width: 10%; } /* Data Abastecimento */
+        .predio-table th:nth-child(10), .predio-table td:nth-child(10) { width: 10%; } /* Status */
+        .predio-table th:nth-child(11), .predio-table td:nth-child(11) { width: 14%; } /* Ações */
 
         .predio-table tbody tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -192,6 +193,48 @@
         .nowrap {
             white-space: normal;
             word-wrap: break-word;
+        }
+
+        /* Estilos para tipos de armazenamento */
+        .tipo-inteiro {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .tipo-meio {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .btn-saida {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-saida:hover {
+            background: #f57c00;
         }
 
         /* Melhorar a responsividade em telas menores */
@@ -348,69 +391,55 @@
                             <thead>
                                 <tr style="background: #f1f3f4;">
                                     <th>Endereço Completo</th>
+                                    <th>Tipo</th>
                                     <th>Código</th>
-                                    <th>Categoria</th>
-                                <th>Produto</th>
-                                <th>Peso</th>
-                                <th>Validade 1</th>
-                                <th>Validade 2</th>
-                                <th>Validade 3</th>
-                                <th>Data de Abastecimento</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
+                                    <th>Produto</th>
+                                    <th>Peso</th>
+                                    <th>Validade 1</th>
+                                    <th>Validade 2</th>
+                                    <th>Validade 3</th>
+                                    <th>Data de Abastecimento</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
                         <tbody>
                             {% for item in itens %}
                             {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
                             <tr>
                                 <td class="nowrap" style="font-weight: 600; color: #495057;">
-                                    {{ item.local.rua }}, {{ item.local.predio }}, {{ item.local.nivel }}, {{ item.local.ap }}
+                                    Rua {{ item.local.rua }}, Prédio {{ item.local.predio }}, Nível {{ item.local.nivel }}, AP {{ item.local.ap }}
                                 </td>
-                                <td>
-                                    {{ item.produto.codigo }}
-                                </td>
-                                <td>
-                                    <form method="post" action="{% url 'editar_endereco' item.local.id %}" style="display:inline;">
-                                        {% csrf_token %}
-                                        <select name="categoria_armazenamento" style="font-size:0.95em;">
-                                            <option value="inteiro" {% if item.local.categoria_armazenamento == 'inteiro' %}selected{% endif %}>Inteiro</option>
-                                            <option value="meio" {% if item.local.categoria_armazenamento == 'meio' %}selected{% endif %}>Meio</option>
-                                        </select>
-                                        <button type="submit" style="background:#007bff;color:#fff;border:none;padding:2px 8px;border-radius:3px;font-size:0.95em;cursor:pointer;">Salvar</button>
-                                    </form>
-                                    {% if item.local.categoria_armazenamento %}
-                                        <span style="font-size:0.9em;color:#888;">({{ item.local.get_categoria_armazenamento_display }})</span>
+                                <td style="text-align: center;">
+                                    {% if item.local.categoria_armazenamento == 'inteiro' %}
+                                        <span class="tipo-inteiro">Inteiro</span>
+                                    {% else %}
+                                        <span class="tipo-meio">Meio</span>
                                     {% endif %}
                                 </td>
+                                <td>{{ item.produto.codigo }}</td>
                                 <td class="nowrap">{{ item.produto.nome }}</td>
                                 <td class="nowrap">{{ item.produto.peso }}</td>
                                 <td>
                                     {% if lotes|length > 0 %}
-                                        <form method="post" action="{% url 'editar_lote' lotes.0.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <span>{{ lotes.0.validade|date:"d/m/Y" }}</span>
-                                            <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
-                                        </form>
-                                    {% else %}-{% endif %}
+                                        {{ lotes.0.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if lotes|length > 1 %}
-                                        <form method="post" action="{% url 'editar_lote' lotes.1.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <span>{{ lotes.1.validade|date:"d/m/Y" }}</span>
-                                            <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
-                                        </form>
-                                    {% else %}-{% endif %}
+                                        {{ lotes.1.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if lotes|length > 2 %}
-                                        <form method="post" action="{% url 'editar_lote' lotes.2.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <span>{{ lotes.2.validade|date:"d/m/Y" }}</span>
-                                            <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" style="background:none;border:none;color:#c00;font-weight:bold;cursor:pointer;" title="Remover validade" onclick="return confirm('Remover esta validade?')">x</button>
-                                        </form>
-                                    {% else %}-{% endif %}
+                                        {{ lotes.2.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </td>
                                 <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
                                 <td>
@@ -423,6 +452,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="actions">
+                                    {% if item.local.categoria_armazenamento == 'inteiro' %}
+                                        <a href="{% url 'marcar_saida' item.id %}" class="btn-saida"
+                                           onclick="return confirm('Marcar como saída (transferir para nível 0)?')">📦 Saída</a>
+                                    {% endif %}
                                     <a href="{% url 'remover_produto' item.id %}"
                                         onclick="return confirm('Remover este produto do estoque?')">Remover</a>
                                     {% if lotes|length > 0 %}
