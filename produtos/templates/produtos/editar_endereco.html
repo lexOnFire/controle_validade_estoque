@@ -8,9 +8,12 @@
         .container { max-width: 500px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
         h2 { color: #333; }
         form { display: flex; flex-direction: column; }
-        label { margin-top: 10px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        label { margin-top: 10px; font-weight: bold; }
+        input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         button { margin-top: 20px; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; }
+        .tipo-atual { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .tipo-inteiro { color: #1976d2; font-weight: bold; }
+        .tipo-meio { color: #f57c00; font-weight: bold; }
         .success { color: #28a745; }
         .error { color: #c00; background:#ffeaea; border:1px solid #c00; padding:10px; border-radius:6px; margin-bottom:12px; text-align:center; font-weight:bold; }
     </style>
@@ -18,6 +21,16 @@
 <body>
     <div class="container">
         <h2>Editar Endereço</h2>
+        
+        <div class="tipo-atual">
+            <strong>Tipo atual:</strong> 
+            {% if endereco.categoria_armazenamento == 'inteiro' %}
+                <span class="tipo-inteiro">🏢 Palete Fechado (Nível 2)</span>
+            {% else %}
+                <span class="tipo-meio">📦 Saída (Nível 0)</span>
+            {% endif %}
+        </div>
+        
         <form method="POST">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -27,10 +40,15 @@
                     {% endfor %}
                 </div>
             {% endif %}
+            
             {% for field in form %}
+                {% if field.errors %}
+                    <div class="error">{{ field.errors }}</div>
+                {% endif %}
                 {{ field.label_tag }}
                 {{ field }}
             {% endfor %}
+            
             <button type="submit">Salvar Alterações</button>
         </form>
         <a href="{% url 'cadastrar_enderecos' %}" style="display:block; margin-top:20px; text-align:center;">← Voltar</a>

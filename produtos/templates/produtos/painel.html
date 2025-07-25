@@ -233,8 +233,21 @@
             display: inline-block;
         }
 
-        .btn-saida:hover {
-            background: #f57c00;
+        .btn-alterar-tipo {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-alterar-tipo:hover {
+            background: #5a6268;
         }
 
         /* Melhorar a responsividade em telas menores */
@@ -382,8 +395,22 @@
                 
                 {% for rua_nome, itens in ruas.items %}
                 <div class="rua-section" style="margin-bottom: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; overflow-x: auto;">
-                    <h3 class="rua-title" style="background: #f8f9fa; color: #495057; padding: 0.75rem 1rem; margin: 0; border-bottom: 1px solid #e0e0e0; font-size: 1.2rem; font-weight: 600;">
-                        🛣️ Rua: {{ rua_nome }} ({{ itens|length }} item{{ itens|length|pluralize }})
+                    <h3 class="rua-title" style="background: #f8f9fa; color: #495057; padding: 0.75rem 1rem; margin: 0; border-bottom: 1px solid #e0e0e0; font-size: 1.2rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🛣️ Rua: {{ rua_nome }} ({{ itens|length }} item{{ itens|length|pluralize }})</span>
+                        <div>
+                            {% with primeiro_item=itens.0 %}
+                            {% if primeiro_item.local %}
+                            <a href="{% url 'alterar_tipo_endereco' primeiro_item.local.id %}" class="btn-alterar-tipo"
+                               onclick="return confirm('Alterar tipo de armazenamento deste endereço?')">
+                               {% if primeiro_item.local.categoria_armazenamento == 'inteiro' %}
+                                   🔄 Para Saída
+                               {% else %}
+                                   🔄 Para Inteiro
+                               {% endif %}
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
                     </h3>
                     
                     <div style="overflow-x: auto;">

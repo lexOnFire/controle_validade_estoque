@@ -1378,3 +1378,32 @@ def marcar_saida(request, estoque_id):
         messages.error(request, f'Erro ao marcar produto como saída: {str(e)}')
     
     return redirect('painel')
+
+def alterar_tipo_endereco(request, endereco_id):
+    """Altera o tipo de armazenamento de um endereço"""
+    try:
+        endereco = get_object_or_404(Armazenamento, id=endereco_id)
+        
+        # Verifica se há produtos neste endereço
+        produtos_no_endereco = Estoque.objects.filter(local=endereco).count()
+        
+        if produtos_no_endereco > 0:
+            messages.warning(request, f'Não é possível alterar o tipo. Este endereço possui {produtos_no_endereco} produto(s) armazenado(s).')
+            return redirect('painel')
+        
+        # Alterna o tipo
+        if endereco.categoria_armazenamento == 'inteiro':
+            endereco.categoria_armazenamento = 'meio'
+            tipo_novo = 'Saída (Nível 0)'
+        else:
+            endereco.categoria_armazenamento = 'inteiro'
+            tipo_novo = 'Palete Fechado (Nível 2)'
+        
+        endereco.save()
+        
+        messages.success(request, f'Tipo do endereço alterado para "{tipo_novo}" com sucesso!')
+        
+    except Exception as e:
+        messages.error(request, f'Erro ao alterar tipo do endereço: {str(e)}')
+    
+    return redirect('painel')

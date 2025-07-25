@@ -8,8 +8,8 @@
         .container { max-width: 500px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
         h2 { color: #333; }
         form { display: flex; flex-direction: column; }
-        label { margin-top: 10px; }
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        label { margin-top: 10px; font-weight: bold; }
+        input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
         button { margin-top: 20px; padding: 10px; background: #28a745; color: #fff; border: none; border-radius: 4px; font-size: 16px; }
         ul { color: #c00; margin-top: 16px; }
         .success { color: #28a745; }
@@ -95,6 +95,7 @@
                 <thead>
                     <tr style="background:#f1f1f1;">
                         <th><input type="checkbox" id="select-all" onclick="for(let cb of document.querySelectorAll('.cb-endereco')){cb.checked=this.checked}"></th>
+                        <th>Tipo</th>
                         <th>Rua</th>
                         <th>Prédio</th>
                         <th>Nível</th>
@@ -106,6 +107,13 @@
                     {% for endereco in enderecos %}
                     <tr>
                         <td><input type="checkbox" name="excluir_endereco_ids" value="{{ endereco.id }}" class="cb-endereco"></td>
+                        <td>
+                            {% if endereco.categoria_armazenamento == 'inteiro' %}
+                                <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 8px; font-size: 11px; font-weight: bold;">Inteiro</span>
+                            {% else %}
+                                <span style="background: #fff3e0; color: #f57c00; padding: 2px 6px; border-radius: 8px; font-size: 11px; font-weight: bold;">Meio</span>
+                            {% endif %}
+                        </td>
                         <td>{{ endereco.rua }}</td>
                         <td>{{ endereco.predio }}</td>
                         <td>{{ endereco.nivel }}</td>

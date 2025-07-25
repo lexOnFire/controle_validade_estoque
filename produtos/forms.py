@@ -37,14 +37,24 @@ class ProdutoForm(forms.ModelForm):
 class ArmazenamentoForm(forms.ModelForm):
     class Meta:
         model = Armazenamento
-        fields = ['rua', 'predio', 'nivel', 'ap', 'capacidade_maxima', 'observacoes']
+        fields = ['categoria_armazenamento', 'rua', 'predio', 'nivel', 'ap', 'capacidade_maxima', 'observacoes']
         widgets = {
+            'categoria_armazenamento': forms.Select(attrs={'class': 'form-control'}),
             'rua': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome da rua'}),
             'predio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome/Número do prédio'}),
             'nivel': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Andar/Nível'}),
             'ap': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apartamento/Sala'}),
             'capacidade_maxima': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Capacidade máxima', 'min': '1'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observações (opcional)'}),
+        }
+        labels = {
+            'categoria_armazenamento': 'Tipo de Armazenamento',
+            'rua': 'Rua',
+            'predio': 'Prédio',
+            'nivel': 'Nível',
+            'ap': 'Apartamento',
+            'capacidade_maxima': 'Capacidade Máxima',
+            'observacoes': 'Observações',
         }
 
     def __init__(self, *args, **kwargs):
@@ -95,11 +105,25 @@ class ArmazenamentoForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        if Armazenamento.objects.filter(
-            rua=cleaned_data.get('rua'),
-            predio=cleaned_data.get('predio'),
-            nivel=cleaned_data.get('nivel'),
-            ap=cleaned_data.get('ap')
-        ).exists():
-            raise forms.ValidationError("Endereço já cadastrado.")
+        rua = cleaned_data.get('rua')
+        predio = cleaned_data.get('predio')
+        nivel = cleaned_data.get('nivel')
+        ap = cleaned_data.get('ap')
+        
+        # Verifica duplicatas apenas se não for uma edição do mesmo registro
+        if rua and predio and nivel and ap:
+            existing = Armazenamento.objects.filter(
+                rua=rua,
+                predio=predio,
+                nivel=nivel,
+                ap=ap
+            )
+            
+            # Se estamos editando, exclui o próprio registro da verificação
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            
+            if existing.exists():
+                raise forms.ValidationError("Endereço já cadastrado.")
+        
         return cleaned_data
