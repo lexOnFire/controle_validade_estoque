@@ -88,40 +88,74 @@
         </form>
 
         <hr style="margin:30px 0;">
-        <h3 style="margin-bottom:10px;">Endereços cadastrados</h3>
-        <form method="post" id="form-excluir-multiplos" onsubmit="return confirm('Excluir os endereços selecionados?');">
-            {% csrf_token %}
-            <table style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#f1f1f1;">
-                        <th><input type="checkbox" id="select-all" onclick="for(let cb of document.querySelectorAll('.cb-endereco')){cb.checked=this.checked}"></th>
-                        <th>Tipo</th>
-                        <th>Rua</th>
-                        <th>Prédio</th>
-                        <th>Nível</th>
-                        <th>Ap</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for endereco in enderecos %}
-                    <tr>
-                        <td><input type="checkbox" name="excluir_endereco_ids" value="{{ endereco.id }}" class="cb-endereco"></td>
-                        <td>
-                            {% if endereco.categoria_armazenamento == 'inteiro' %}
-                                <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 8px; font-size: 11px; font-weight: bold;">Inteiro</span>
-                            {% else %}
-                                <span style="background: #fff3e0; color: #f57c00; padding: 2px 6px; border-radius: 8px; font-size: 11px; font-weight: bold;">Meio</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ endereco.rua }}</td>
-                        <td>{{ endereco.predio }}</td>
-                        <td>{{ endereco.nivel }}</td>
-                        <td>{{ endereco.ap }}</td>
-                        <td>
-                            <button type="button" onclick="marcarExcluir('{{ endereco.id }}')" style="background:#c00; color:#fff; border:none; border-radius:4px; padding:6px 12px; cursor:pointer;">Excluir</button>
-                            <a href="{% url 'editar_endereco' endereco.id %}" style="background:#007bff; color:#fff; border-radius:4px; padding:6px 12px; margin-left:8px; text-decoration:none; font-size:14px;">Editar</a>
-                        </td>
+        <h3 style="margin-bottom:20px;">Endereços cadastrados</h3>
+        
+        {% if enderecos_agrupados %}
+            <form method="post" id="form-excluir-multiplos" onsubmit="return confirm('Excluir os endereços selecionados?');">
+                {% csrf_token %}
+                
+                {% for rua_nome, predios in enderecos_agrupados.items %}
+                <div style="margin-bottom: 30px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                    <h4 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; margin: 0; font-size: 16px;">
+                        🛣️ Rua: {{ rua_nome }}
+                    </h4>
+                    
+                    {% for predio_nome, enderecos in predios.items %}
+                    <div style="margin: 15px; border: 1px solid #dee2e6; border-radius: 6px;">
+                        <h5 style="background: #f8f9fa; padding: 8px 12px; margin: 0; border-bottom: 1px solid #dee2e6; font-size: 14px; color: #495057;">
+                            🏢 Prédio: {{ predio_nome }} ({{ enderecos|length }} endereço{{ enderecos|length|pluralize }})
+                        </h5>
+                        
+                        <table style="width:100%; border-collapse:collapse; margin: 0;">
+                            <thead>
+                                <tr style="background:#f1f3f4; font-size: 12px;">
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;"><input type="checkbox" class="select-grupo" onclick="toggleGrupo(this, '{{ rua_nome }}-{{ predio_nome }}')"></th>
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Tipo</th>
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Nível</th>
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Apartamento</th>
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Capacidade</th>
+                                    <th style="padding: 8px; border-bottom: 1px solid #dee2e6;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for endereco in enderecos %}
+                                <tr style="font-size: 13px;">
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;"><input type="checkbox" name="excluir_endereco_ids" value="{{ endereco.id }}" class="cb-endereco cb-{{ rua_nome }}-{{ predio_nome }}"></td>
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">
+                                        {% if endereco.categoria_armazenamento == 'inteiro' %}
+                                            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: bold;">Inteiro</span>
+                                        {% else %}
+                                            <span style="background: #fff3e0; color: #f57c00; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: bold;">Meio</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.nivel }}</td>
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.ap }}</td>
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">{{ endereco.capacidade_maxima }}</td>
+                                    <td style="padding: 6px 8px; border-bottom: 1px solid #f0f0f0;">
+                                        <button type="button" onclick="marcarExcluir('{{ endereco.id }}')" style="background:#dc3545; color:#fff; border:none; border-radius:3px; padding:4px 8px; cursor:pointer; font-size: 11px; margin-right: 4px;">Excluir</button>
+                                        <a href="{% url 'editar_endereco' endereco.id %}" style="background:#007bff; color:#fff; border-radius:3px; padding:4px 8px; text-decoration:none; font-size:11px;">Editar</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <input type="checkbox" id="select-all" onclick="toggleTodos(this)" style="margin-right: 8px;">
+                    <label for="select-all" style="margin-right: 15px;">Selecionar todos</label>
+                    <button type="submit" name="excluir_multiplos" style="background:#dc3545; color:#fff; border:none; border-radius:4px; padding:10px 20px; cursor:pointer; font-weight: bold;">🗑️ Excluir Selecionados</button>
+                </div>
+            </form>
+        {% else %}
+            <div style="text-align:center; padding: 40px; color: #666; background: #f8f9fa; border-radius: 8px;">
+                <p>Nenhum endereço cadastrado ainda.</p>
+            </div>
+        {% endif %}
+        
         <script>
         function marcarExcluir(id) {
             var cb = document.querySelector('input.cb-endereco[value="'+id+'"]');
@@ -130,15 +164,27 @@
                 document.getElementById('form-excluir-multiplos').submit();
             }
         }
+        
+        function toggleGrupo(checkbox, grupoClass) {
+            var checkboxes = document.getElementsByClassName('cb-' + grupoClass);
+            for(var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = checkbox.checked;
+            }
+        }
+        
+        function toggleTodos(checkbox) {
+            var checkboxes = document.getElementsByClassName('cb-endereco');
+            var grupoCheckboxes = document.getElementsByClassName('select-grupo');
+            
+            for(var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = checkbox.checked;
+            }
+            
+            for(var i = 0; i < grupoCheckboxes.length; i++) {
+                grupoCheckboxes[i].checked = checkbox.checked;
+            }
+        }
         </script>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" style="text-align:center;">Nenhum endereço cadastrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <button type="submit" name="excluir_multiplos" style="margin-top:12px; background:#c00; color:#fff; border:none; border-radius:4px; padding:8px 18px; cursor:pointer;">Excluir Selecionados</button>
-        </form>
     </div>
 </body>
 </html>

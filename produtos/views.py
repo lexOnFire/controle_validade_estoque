@@ -523,8 +523,56 @@ def cadastrar_enderecos(request):
                 })
     else:
         form = ArmazenamentoForm()
-    enderecos = Armazenamento.objects.all().order_by('-id')
-    return render(request, 'produtos/cadastrar_enderecos.html', {'form': form, 'ultimo_endereco': ultimo_endereco, 'enderecos': enderecos})
+    
+    # Buscar todos os endereços e agrupar por rua e prédio
+    todos_enderecos = Armazenamento.objects.all()
+    
+    # Função para ordenação numérica quando possível
+    def ordenacao_inteligente(valor):
+        """Ordena numericamente se possível, senão alfabeticamente"""
+        try:
+            return (0, int(valor))  # Se for número, usa ordenação numérica
+        except ValueError:
+            return (1, valor.lower())  # Se não for número, usa ordenação alfabética
+    
+    # Agrupar endereços por rua e prédio
+    enderecos_agrupados = {}
+    for endereco in todos_enderecos:
+        rua = endereco.rua
+        predio = endereco.predio
+        
+        if rua not in enderecos_agrupados:
+            enderecos_agrupados[rua] = {}
+        
+        if predio not in enderecos_agrupados[rua]:
+            enderecos_agrupados[rua][predio] = []
+        
+        enderecos_agrupados[rua][predio].append(endereco)
+    
+    # Ordenar os grupos e endereços
+    enderecos_ordenados = {}
+    
+    # Ordena ruas
+    ruas_ordenadas_keys = sorted(enderecos_agrupados.keys(), key=ordenacao_inteligente)
+    
+    for rua in ruas_ordenadas_keys:
+        enderecos_ordenados[rua] = {}
+        
+        # Ordena prédios dentro da rua
+        predios_ordenados_keys = sorted(enderecos_agrupados[rua].keys(), key=ordenacao_inteligente)
+        
+        for predio in predios_ordenados_keys:
+            # Ordena endereços dentro do prédio por nível e AP
+            enderecos_ordenados[rua][predio] = sorted(
+                enderecos_agrupados[rua][predio],
+                key=lambda x: (ordenacao_inteligente(str(x.nivel)), ordenacao_inteligente(str(x.ap)))
+            )
+    
+    return render(request, 'produtos/cadastrar_enderecos.html', {
+        'form': form, 
+        'ultimo_endereco': ultimo_endereco, 
+        'enderecos_agrupados': enderecos_ordenados
+    })
 
 @login_required
 def exportar_estoque_csv(request):
