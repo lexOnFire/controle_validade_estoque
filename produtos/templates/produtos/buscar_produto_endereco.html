@@ -233,9 +233,71 @@
                     
                     <div style="margin-top: 20px;">
                         <p><strong>Deseja armazenar este produto no endereço {{ endereco }}?</strong></p>
-                        <a href="{% url 'confirmar_armazenamento_endereco' endereco.id produto_encontrado.id %}" class="btn btn-success">
-                            📦 Sim, Armazenar Aqui
-                        </a>
+                        
+                        <!-- Formulário expandido para armazenamento com múltiplas validades -->
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+                            <form method="get" action="{% url 'confirmar_armazenamento_endereco' endereco.id produto_encontrado.id %}" id="formMultiplasValidades">
+                                <!-- Manter o parâmetro next -->
+                                {% if request.GET.next %}
+                                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                                {% endif %}
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #333;">
+                                        📅 Validades dos Produtos <span style="color: red;">*</span>
+                                    </label>
+                                    
+                                    <div id="validadesList">
+                                        <!-- Primeira validade (obrigatória) -->
+                                        <div class="validade-item" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                            <input type="date" 
+                                                   name="data_validade_quick"
+                                                   style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                                                   required>
+                                            <input type="number" 
+                                                   name="quantidade"
+                                                   placeholder="Qtd"
+                                                   min="1"
+                                                   value="1"
+                                                   style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                                                   required>
+                                            <button type="button" class="btn-remove-validade" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;" onclick="removeValidade(this)" disabled>
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="button" onclick="addValidade()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                                        ➕ Adicionar Validade
+                                    </button>
+                                </div>
+                                
+                                <div style="margin-bottom: 15px;">
+                                    <label for="data_armazenado_quick" style="display: block; font-weight: bold; margin-bottom: 5px; color: #333;">
+                                        📦 Data de Armazenamento
+                                    </label>
+                                    <input type="date" 
+                                           id="data_armazenado_quick" 
+                                           name="data_armazenado_quick"
+                                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                    <small style="color: #6c757d; font-size: 0.9em;">Se não informado, será utilizada a data atual</small>
+                                </div>
+                                
+                                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                                        📦 Armazenar Produto(s)
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Link alternativo para método tradicional -->
+                        <div style="text-align: center; margin-top: 10px;">
+                            <a href="{% url 'confirmar_armazenamento_endereco' endereco.id produto_encontrado.id %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" 
+                               style="color: #6c757d; text-decoration: none; font-size: 0.9em;">
+                                ou use o formulário completo
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endif %}
@@ -247,5 +309,101 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Função para adicionar nova validade
+        function addValidade() {
+            const validadesList = document.getElementById('validadesList');
+            const novaValidade = document.createElement('div');
+            novaValidade.className = 'validade-item';
+            novaValidade.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+            
+            novaValidade.innerHTML = `
+                <input type="date" 
+                       name="data_validade_quick"
+                       style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                       required>
+                <input type="number" 
+                       name="quantidade"
+                       placeholder="Qtd"
+                       min="1"
+                       value="1"
+                       style="width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
+                       required>
+                <button type="button" class="btn-remove-validade" style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;" onclick="removeValidade(this)">
+                    🗑️
+                </button>
+            `;
+            
+            validadesList.appendChild(novaValidade);
+            updateRemoveButtons();
+            
+            // Configurar data mínima para o novo campo
+            const novoInput = novaValidade.querySelector('input[type="date"]');
+            const hoje = new Date().toISOString().split('T')[0];
+            novoInput.min = hoje;
+        }
+        
+        // Função para remover validade
+        function removeValidade(button) {
+            const validadeItem = button.parentElement;
+            validadeItem.remove();
+            updateRemoveButtons();
+        }
+        
+        // Atualizar estado dos botões de remoção
+        function updateRemoveButtons() {
+            const items = document.querySelectorAll('.validade-item');
+            const removeButtons = document.querySelectorAll('.btn-remove-validade');
+            
+            removeButtons.forEach((btn, index) => {
+                btn.disabled = items.length <= 1;
+            });
+        }
+        
+        // Configurar datas padrão quando o produto for encontrado
+        document.addEventListener('DOMContentLoaded', function() {
+            const dataArmazenadoInput = document.getElementById('data_armazenado_quick');
+            
+            // Configurar todos os inputs de data de validade
+            function setupValidadeInputs() {
+                const validadeInputs = document.querySelectorAll('input[name="data_validade_quick"]');
+                validadeInputs.forEach(input => {
+                    // Definir data mínima como hoje para validade
+                    const hoje = new Date().toISOString().split('T')[0];
+                    input.min = hoje;
+                    
+                    // Se não tem valor, definir 30 dias no futuro
+                    if (!input.value) {
+                        const dataFutura = new Date();
+                        dataFutura.setDate(dataFutura.getDate() + 30);
+                        input.value = dataFutura.toISOString().split('T')[0];
+                    }
+                });
+            }
+            
+            setupValidadeInputs();
+            
+            if (dataArmazenadoInput) {
+                // Definir data padrão de armazenamento como hoje
+                const hoje = new Date().toISOString().split('T')[0];
+                dataArmazenadoInput.value = hoje;
+            }
+            
+            // Observer para novos inputs adicionados
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        setupValidadeInputs();
+                    }
+                });
+            });
+            
+            const validadesList = document.getElementById('validadesList');
+            if (validadesList) {
+                observer.observe(validadesList, { childList: true });
+            }
+        });
+    </script>
 </body>
 </html>

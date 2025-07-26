@@ -1,9 +1,36 @@
 # Sistema de Controle de Validade de Estoque
 
 ## 📋 Visão Geral
-Sistema Django para controle de validade de estoque com interface moderna, agrupamento visual e validações automáticas.
+Sistema Django para controle de validade de estoque com interface moderna em cards, agrupamento visual e validações automáticas.
 
-## 🏗️ Estrutura do Sistema
+## 🎨 **NOVA INTERFACE COM CARDS** (Atualização recente)
+A página principal foi completamente repaginada com um layout moderno baseado em cards:
+
+### 🏷️ Layout de Cards
+- **Cards por endereço**: Cada endereço é exibido em um card individual
+- **Design responsivo**: Grid adaptável para diferentes tamanhos de tela
+- **Organização visual**: Rua > Prédio > Cards de endereços
+- **Sistema de colapso**: Botões para expandir/colapsar ruas
+
+### � Cards de Produto
+- Nome do produto em destaque
+- Código em formato monospace
+- **Badges de status coloridos**:
+  - 🔴 Vencido (vermelho)
+  - 🟠 Vence em breve (laranja) 
+  - 🟡 Próximo ao vencimento (amarelo)
+  - 🟢 Válido (verde)
+- Informações detalhadas (validade, lotes, data de armazenamento)
+- Botões de ação com ícones (Detalhes, Editar, Remover)
+
+### 📱 Melhorias Visuais
+- Gradientes modernos em headers
+- Animações de hover suaves
+- Sombras e elevação em cards
+- Interface totalmente responsiva
+- Endereços vazios com design diferenciado
+
+## �🏗️ Estrutura do Sistema
 
 ### Modelos Principais
 - **Produto**: Cadastro básico de produtos
@@ -12,7 +39,7 @@ Sistema Django para controle de validade de estoque com interface moderna, agrup
 - **Armazenamento**: Endereços físicos de armazenamento
 
 ### Interface Principal
-- **Painel**: Visão consolidada com agrupamento e navegação
+- **Página Principal**: Visão consolidada com cards modernos e navegação intuitiva
 - **Cadastro de Endereços**: Interface limpa com cards e controles de colapso
 - **Relatórios**: Análises e relatórios do sistema
 

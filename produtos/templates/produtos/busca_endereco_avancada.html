@@ -1,0 +1,464 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 Busca Avançada de Endereços</title>
+    <style>
+    .search-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    
+    .search-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .search-field {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .search-field label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .search-field input, .search-field select {
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        background: rgba(255,255,255,0.9);
+    }
+    
+    .search-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+    }
+    
+    .btn-search {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-search:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+    
+    .btn-clear {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .endereco-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #007bff;
+        transition: all 0.3s;
+    }
+    
+    .endereco-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .endereco-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .endereco-codigo {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .endereco-status {
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .status-vazio {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-ocupado {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .endereco-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        color: #343a40;
+        font-weight: 500;
+    }
+    
+    .endereco-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    
+    .btn-action {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-1px);
+        opacity: 0.9;
+    }
+    
+    .results-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .results-count {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .produtos-armazenados {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #28a745;
+    }
+    
+    .produtos-armazenados h5 {
+        margin: 0 0 10px 0;
+        color: #495057;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .produtos-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .produto-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        background: white;
+        border-radius: 6px;
+        font-size: 12px;
+    }
+    
+    .produto-codigo {
+        background: #007bff;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .produto-nome {
+        flex: 1;
+        color: #495057;
+    }
+    
+    .produto-quantidade {
+        background: #28a745;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    
+    .produto-validade {
+        background: #ffc107;
+        color: #212529;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+    
+    .sort-options {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .sort-options select {
+        padding: 6px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+</style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="search-container">
+        <h1>🏢 Busca Avançada de Endereços</h1>
+        <p>Encontre endereços por código, localização, status ou produtos armazenados</p>
+        
+        <form method="GET" class="search-form">
+            <div class="search-grid">
+                <div class="search-field">
+                    <label>🔍 Código do Endereço</label>
+                    <input type="text" name="codigo" value="{{ request.GET.codigo }}" 
+                           placeholder="Ex: 01-02-00-01">
+                </div>
+                
+                <div class="search-field">
+                    <label>� Código do Produto</label>
+                    <input type="text" name="codigo_produto" value="{{ request.GET.codigo_produto }}" 
+                           placeholder="Ex: 618">
+                </div>
+                
+                <div class="search-field">
+                    <label>�🛣️ Rua</label>
+                    <input type="text" name="rua" value="{{ request.GET.rua }}" 
+                           placeholder="Ex: 1">
+                </div>
+                
+                <div class="search-field">
+                    <label>🏢 Prédio</label>
+                    <input type="text" name="predio" value="{{ request.GET.predio }}" 
+                           placeholder="Ex: 2">
+                </div>
+                
+                <div class="search-field">
+                    <label>📍 Nível</label>
+                    <input type="text" name="nivel" value="{{ request.GET.nivel }}" 
+                           placeholder="Ex: 0">
+                </div>
+                
+                <div class="search-field">
+                    <label>🚪 Apartamento</label>
+                    <input type="text" name="ap" value="{{ request.GET.ap }}" 
+                           placeholder="Ex: 1">
+                </div>
+                
+                <div class="search-field">
+                    <label>📦 Status</label>
+                    <select name="status">
+                        <option value="">Todos</option>
+                        <option value="vazio" {% if request.GET.status == 'vazio' %}selected{% endif %}>Vazio</option>
+                        <option value="ocupado" {% if request.GET.status == 'ocupado' %}selected{% endif %}>Ocupado</option>
+                    </select>
+                </div>
+                
+                <div class="search-field">
+                    <label>🏷️ Tipo</label>
+                    <select name="tipo">
+                        <option value="">Todos</option>
+                        <option value="inteiro" {% if request.GET.tipo == 'inteiro' %}selected{% endif %}>Palete Fechado</option>
+                        <option value="meio" {% if request.GET.tipo == 'meio' %}selected{% endif %}>Saída</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="search-actions">
+                <button type="submit" class="btn-search">🔍 Buscar</button>
+                <a href="{% url 'busca_endereco_avancada' %}" class="btn-clear">🔄 Limpar</a>
+            </div>
+        </form>
+    </div>
+    
+    {% if enderecos %}
+    <div class="results-header">
+        <div class="results-count">
+            📊 {{ enderecos|length }} endereço{{ enderecos|length|pluralize }} encontrado{{ enderecos|length|pluralize }}
+        </div>
+        <div class="sort-options">
+            <label>Ordenar por:</label>
+            <select onchange="location.href='?' + new URLSearchParams(Object.assign(Object.fromEntries(new URLSearchParams(location.search)), {sort: this.value})).toString()">
+                <option value="codigo" {% if request.GET.sort == 'codigo' %}selected{% endif %}>Código</option>
+                <option value="rua" {% if request.GET.sort == 'rua' %}selected{% endif %}>Rua</option>
+                <option value="ocupacao" {% if request.GET.sort == 'ocupacao' %}selected{% endif %}>Ocupação</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="endereco-results">
+        {% for endereco in enderecos %}
+        <div class="endereco-card">
+            <div class="endereco-header">
+                <div class="endereco-codigo">📍 {{ endereco.codigo|default:"SEM-CÓDIGO" }}</div>
+                <div class="endereco-status {% if endereco.ocupacao_atual > 0 %}status-ocupado{% else %}status-vazio{% endif %}">
+                    {% if endereco.ocupacao_atual > 0 %}
+                        🔴 Ocupado ({{ endereco.ocupacao_atual }})
+                    {% else %}
+                        🟢 Vazio
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="endereco-info">
+                <div class="info-item">
+                    <div class="info-label">Rua</div>
+                    <div class="info-value">{{ endereco.rua }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Prédio</div>
+                    <div class="info-value">{{ endereco.predio }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Nível</div>
+                    <div class="info-value">{{ endereco.nivel }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Apartamento</div>
+                    <div class="info-value">{{ endereco.ap }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tipo</div>
+                    <div class="info-value">
+                        {% if endereco.categoria_armazenamento == 'inteiro' %}
+                            🔵 Palete Fechado
+                        {% else %}
+                            🟡 Saída
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Capacidade</div>
+                    <div class="info-value">{{ endereco.ocupacao_atual }}/{{ endereco.capacidade_maxima }}</div>
+                </div>
+            </div>
+            
+            {% if endereco.estoque_set.all %}
+            <div class="produtos-armazenados">
+                <h5>📦 Produtos Armazenados:</h5>
+                <div class="produtos-lista">
+                    {% for estoque in endereco.estoque_set.all %}
+                    <div class="produto-item">
+                        <span class="produto-codigo">{{ estoque.produto.codigo }}</span>
+                        <span class="produto-nome">{{ estoque.produto.nome|truncatechars:30 }}</span>
+                        <span class="produto-quantidade">Qtd: {{ estoque.quantidade }}</span>
+                        {% if estoque.data_validade %}
+                        <span class="produto-validade">Val: {{ estoque.data_validade|date:"d/m/Y" }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="endereco-actions">
+                {% if endereco.ocupacao_atual == 0 %}
+                    <a href="{% url 'buscar_produto_endereco' endereco.id %}?next={{ request.get_full_path|urlencode }}" class="btn-action btn-success">
+                        📦 Armazenar Produto
+                    </a>
+                {% endif %}
+                <a href="{% url 'editar_endereco' endereco.id %}" class="btn-action btn-warning">
+                    ✏️ Editar
+                </a>
+                <a href="{% url 'painel' %}?highlight={{ endereco.id }}" class="btn-action btn-primary">
+                    👁️ Ver no Painel
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif request.GET %}
+    <div class="alert alert-info">
+        <h4>🔍 Nenhum endereço encontrado</h4>
+        <p>Tente ajustar os critérios de busca.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Auto-formatação do código
+document.querySelector('input[name="codigo"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length >= 2) value = value.substring(0,2) + '-' + value.substring(2);
+    if (value.length >= 5) value = value.substring(0,5) + '-' + value.substring(5);
+    if (value.length >= 8) value = value.substring(0,8) + '-' + value.substring(8);
+    e.target.value = value;
+});
+</script>
+</body>
+</html>

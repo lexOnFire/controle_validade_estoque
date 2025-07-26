@@ -1,0 +1,699 @@
+{% extends "produtos/base.html" %}
+{% load static %}
+
+{% block title %}Movimentação de Estoque{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        margin-bottom: 20px;
+        border-left: 5px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .endereco-card {
+        background: #f8f9ff;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .endereco-card:hover {
+        border-color: #667eea;
+        background: #fff;
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+    }
+    
+    .endereco-card.nivel-0 {
+        border-left: 5px solid #28a745;
+    }
+    
+    .endereco-card.nivel-1 {
+        border-left: 5px solid #ffc107;
+    }
+    
+    .endereco-card.nivel-2 {
+        border-left: 5px solid #17a2b8;
+    }
+    
+    .endereco-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .endereco-codigo {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .categoria-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    
+    .categoria-meio {
+        background: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #1976d2;
+    }
+    
+    .categoria-inteiro {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border: 1px solid #7b1fa2;
+    }
+    
+    .endereco-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .detail-item {
+        text-align: center;
+        padding: 10px;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 8px;
+    }
+    
+    .detail-label {
+        font-size: 0.8em;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .nivel-badge {
+        padding: 3px 8px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+    
+    .nivel-0 {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .nivel-1 {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .nivel-2 {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .btn-abastecer {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .btn-abastecer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        background: linear-gradient(135deg, #218838, #1ba872);
+        color: white;
+    }
+    
+    .produto-header {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .total-unidades {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: 25px;
+        display: inline-block;
+        margin-top: 10px;
+    }
+    
+    .validade-info {
+        background: rgba(255,255,255,0.15);
+        border-radius: 10px;
+        padding: 12px;
+        backdrop-filter: blur(10px);
+        margin-top: 10px;
+    }
+    
+    .validade-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        font-size: 0.9em;
+        color: white;
+    }
+    
+    .validade-badge i {
+        width: 16px;
+        text-align: center;
+    }
+    
+    .validade-badge .text-success {
+        background: rgba(40, 167, 69, 0.3);
+        color: #d4edda !important;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    
+    .validade-badge .text-warning {
+        background: rgba(255, 193, 7, 0.3);
+        color: #fff3cd !important;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    
+    .historico-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 30px;
+    }
+    
+    .historico-item {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .search-btn {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        font-size: 1.1em;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .alert-custom {
+        border-radius: 15px;
+        border: none;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    
+    .no-results i {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-exchange-alt text-primary"></i>
+                        Movimentação de Estoque
+                    </h1>
+                    <p class="text-muted mb-0">Controle de abastecimento e transferências</p>
+                </div>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-custom alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Seção de Busca -->
+    <div class="search-section">
+        <h4 class="mb-4">
+            <i class="fas fa-search"></i> Buscar Produto
+        </h4>
+        
+        <form method="post" class="d-flex gap-3 align-items-end">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="buscar_produto">
+            
+            <div class="flex-grow-1">
+                <label for="codigo" class="form-label">Código do Produto</label>
+                <input type="text" 
+                       class="form-control form-control-lg" 
+                       id="codigo" 
+                       name="codigo" 
+                       placeholder="Digite o código do produto..."
+                       value="{{ codigo_busca|default:'' }}"
+                       required>
+            </div>
+            
+            <div>
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resultado da Busca -->
+    {% if produto_encontrado %}
+        <div class="produto-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h3 class="mb-2">
+                        <i class="fas fa-box"></i>
+                        {{ produto_encontrado.nome }}
+                    </h3>
+                    <p class="mb-0 opacity-75">
+                        <strong>Código:</strong> {{ produto_encontrado.codigo }} |
+                        <strong>Categoria:</strong> {{ produto_encontrado.categoria|default:'Não informada' }}
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="total-unidades">
+                                <h4 class="mb-0">{{ total_unidades }}</h4>
+                                <small>unidade{{ total_unidades|pluralize }}</small>
+                            </div>
+                        </div>
+                        {% if validade_atual or proxima_validade %}
+                        <div class="col-12 mt-3">
+                            <div class="validade-info">
+                                {% if validade_atual %}
+                                    <div class="validade-badge mb-1">
+                                        <i class="fas fa-calendar-check"></i>
+                                        <span class="fw-bold">Validade Atual:</span>
+                                        <span class="text-success">{{ validade_atual|date:"d/m/Y" }}</span>
+                                    </div>
+                                {% endif %}
+                                {% if proxima_validade %}
+                                    <div class="validade-badge">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span class="fw-bold">Próxima Validade:</span>
+                                        <span class="text-warning">{{ proxima_validade|date:"d/m/Y" }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produto sem estoque - Formulário de Alocação -->
+        {% if produto_sem_estoque %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle"></i> Produto sem estoque</h5>
+                <p>Este produto não possui unidades em estoque. Você pode alocar o produto em um endereço:</p>
+                
+                <form method="post" class="mt-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="alocar_produto">
+                    <input type="hidden" name="produto_id" value="{{ produto_encontrado.id }}">
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="endereco_destino_id" class="form-label">Endereço</label>
+                            <select class="form-select" name="endereco_destino_id" required>
+                                <option value="">Selecione um endereço...</option>
+                                {% for endereco in enderecos_destino %}
+                                    <option value="{{ endereco.id }}">
+                                        {{ endereco.codigo|default:endereco }} - 
+                                        R{{ endereco.rua }}P{{ endereco.predio }}N{{ endereco.nivel }}AP{{ endereco.ap }}
+                                        ({{ endereco.categoria|capfirst }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="data_validade" class="form-label">Data de Validade</label>
+                            <input type="date" class="form-control" name="data_validade" id="data_validade">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Alocar Produto
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- Lista de Endereços -->
+        {% if enderecos_info %}
+            <div class="row">
+                {% for endereco in enderecos_info %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="endereco-card nivel-{{ endereco.nivel }}">
+                            <div class="endereco-header">
+                                <div class="endereco-codigo">
+                                    {{ endereco.endereco_codigo }}
+                                </div>
+                                <span class="categoria-badge categoria-{{ endereco.categoria }}">
+                                    {{ endereco.categoria|capfirst }}
+                                </span>
+                            </div>
+                            
+                            <div class="endereco-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Rua</div>
+                                    <div class="detail-value">{{ endereco.rua }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Prédio</div>
+                                    <div class="detail-value">{{ endereco.predio }}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Nível</div>
+                                    <div class="detail-value">
+                                        <span class="nivel-badge nivel-{{ endereco.nivel }}">
+                                            {{ endereco.nivel }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">AP</div>
+                                    <div class="detail-value">{{ endereco.ap }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i>
+                                        Armazenado: {{ endereco.data_armazenado|date:"d/m/Y" }}
+                                        {% if endereco.data_alteracao %}
+                                            | <i class="fas fa-edit"></i>
+                                            Alteração: {{ endereco.data_alteracao|date:"d/m/Y H:i" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if endereco.data_validade %}
+                                <div class="col-12 mt-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        <strong>Validade: {{ endereco.data_validade|date:"d/m/Y" }}</strong>
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if endereco.nivel != '0' %}
+                                <button type="button" 
+                                        class="btn-abastecer" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#modalAbastecer"
+                                        data-estoque-id="{{ endereco.id }}">
+                                    <i class="fas fa-arrow-down"></i> Abastecer
+                                </button>
+                            {% else %}
+                                <div class="position-absolute top-0 end-0 m-3">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Área de Saída
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-results">
+                <i class="fas fa-box-open"></i>
+                <h4>Nenhum estoque encontrado</h4>
+                <p>Este produto não possui unidades em estoque.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Histórico Recente -->
+    {% if historico_recente %}
+        <div class="historico-section">
+            <h5 class="mb-4">
+                <i class="fas fa-history"></i> Movimentações Recentes
+            </h5>
+            
+            {% for item in historico_recente %}
+                <div class="historico-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <strong>{{ item.produto.nome }}</strong>
+                            <br>
+                            <small class="text-muted">Código: {{ item.produto.codigo }}</small>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted">
+                                De: {{ item.local_origem|default:'N/A' }}
+                                <br>
+                                Para: {{ item.local_destino|default:'N/A' }}
+                            </small>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <small class="text-muted">
+                                {{ item.data_operacao|date:"d/m H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Abastecimento -->
+<div class="modal fade" id="modalAbastecer" tabindex="-1" aria-labelledby="modalAbastecerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAbastecerLabel">
+                    <i class="fas fa-arrow-down"></i> Abastecer Produto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="post" id="formAbastecer">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="abastecer">
+                <input type="hidden" name="estoque_origem_id" id="estoqueOrigemId">
+                
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Lógica de Abastecimento FIFO:</strong>
+                        <br>
+                        • Se já existe produto no nível 0, apenas a data será atualizada para o produto mais antigo
+                        <br>
+                        • Se não existe produto no nível 0, o produto será transferido do nível superior
+                        <br>
+                        • Produtos no nível 0 são <strong>fixos</strong> e não podem ser removidos do endereço
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="endereco_destino_id" class="form-label">Endereço de Destino (Nível 0)</label>
+                        <select class="form-select" name="endereco_destino_id" id="endereco_destino_id" required>
+                            <option value="">Selecione um endereço...</option>
+                            {% for endereco in enderecos_destino %}
+                                <option value="{{ endereco.id }}">
+                                    {{ endereco.codigo|default:endereco }} - 
+                                    R{{ endereco.rua }}P{{ endereco.predio }}N{{ endereco.nivel }}AP{{ endereco.ap }}
+                                    ({{ endereco.categoria|capfirst }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Atenção:</strong> Esta operação seguirá a regra FIFO (First In, First Out) - produtos mais antigos têm prioridade.
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-arrow-down"></i> Confirmar Abastecimento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para pergunta do nível 2 -->
+{% if pergunta_excluir_nivel2 %}
+<div class="modal fade show" id="modalNivel2" tabindex="-1" aria-labelledby="modalNivel2Label" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalNivel2Label">
+                    <i class="fas fa-question-circle"></i> Endereço Vazio no Nível 2
+                </h5>
+            </div>
+            
+            <div class="modal-body">
+                <p>O endereço <strong>{{ endereco_nivel2 }}</strong> no nível 2 ficou vazio após a movimentação do produto <strong>{{ produto_movido.nome }}</strong>.</p>
+                <p>Deseja excluir este endereço do nível 2?</p>
+            </div>
+            
+            <div class="modal-footer">
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="manter_nivel2">
+                    <button type="submit" class="btn btn-secondary">Manter Endereço</button>
+                </form>
+                
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="excluir_nivel2">
+                    <input type="hidden" name="endereco_id" value="{{ endereco_nivel2.id }}">
+                    <button type="submit" class="btn btn-warning">Excluir Endereço</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de abastecimento
+    const modalAbastecer = document.getElementById('modalAbastecer');
+    const btnAbastecer = document.querySelectorAll('.btn-abastecer');
+    
+    btnAbastecer.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const estoqueId = this.getAttribute('data-estoque-id');
+            document.getElementById('estoqueOrigemId').value = estoqueId;
+        });
+    });
+    
+    // Auto-focus no campo de código quando a página carregar
+    const codigoInput = document.getElementById('codigo');
+    if (codigoInput) {
+        codigoInput.focus();
+    }
+    
+    // Permitir busca com Enter e validação
+    const formBusca = document.querySelector('form');
+    if (formBusca) {
+        formBusca.addEventListener('submit', function(e) {
+            const codigo = document.getElementById('codigo').value.trim();
+            if (!codigo) {
+                e.preventDefault();
+                alert('Por favor, digite um código de produto.');
+                document.getElementById('codigo').focus();
+                return;
+            }
+            
+            // Mostrar loading no botão
+            const btnBuscar = document.querySelector('.search-btn');
+            if (btnBuscar) {
+                btnBuscar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+                btnBuscar.disabled = true;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

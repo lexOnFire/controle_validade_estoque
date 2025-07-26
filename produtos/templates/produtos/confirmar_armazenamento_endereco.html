@@ -6,8 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmar Armazenamento</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        bo                <div class="form-group">
+                    <label for="data_validade" class="required-label">Data de Validade</label>
+                    <input type="date" 
+                           id="data_validade" 
+                           name="data_validade" 
+                           class="form-control required" 
+                           value="{{ data_validade_default|default:'' }}"
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data_armazenado">Data de Armazenamento</label>
+                    <input type="date" 
+                           id="data_armazenado" 
+                           name="data_armazenado" 
+                           class="form-control"
+                           value="{{ data_armazenado_default|default:'' }}">   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -228,6 +243,11 @@
 
             <form method="POST" class="form-section">
                 {% csrf_token %}
+                <!-- Manter o parâmetro next para retornar à busca avançada -->
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+                
                 <h4>📝 Informações do Armazenamento</h4>
                 
                 <div class="required-note">
@@ -235,12 +255,33 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="data_validade" class="required-label">Data de Validade</label>
-                    <input type="date" 
-                           id="data_validade" 
-                           name="data_validade" 
-                           class="form-control required" 
-                           required>
+                    <label class="required-label">Datas de Validade e Quantidades</label>
+                    <div id="validades-container">
+                        <!-- Campo inicial de validade -->
+                        <div class="validade-item row align-items-center mb-2">
+                            <div class="col-6">
+                                <input type="date" class="form-control" name="data_validade" required>
+                                <small class="form-text text-muted">Validade</small>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" name="quantidade" 
+                                       min="1" value="1" required>
+                                <small class="form-text text-muted">Quantidade</small>
+                            </div>
+                            <div class="col-2">
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-validade" 
+                                        style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-validade">
+                        <i class="fas fa-plus me-1"></i>Adicionar Validade
+                    </button>
+                    <small class="form-text text-muted">
+                        Adicione uma ou mais validades com suas respectivas quantidades.
+                    </small>
                 </div>
                 
                 <div class="form-group">
@@ -279,11 +320,75 @@
     </div>
 
     <script>
-        // Definir data mínima como hoje
-        document.getElementById('data_validade').min = new Date().toISOString().split('T')[0];
-        
-        // Definir data padrão de armazenamento como hoje
-        document.getElementById('data_armazenado').value = new Date().toISOString().split('T')[0];
+        // Função para adicionar novos campos de validade
+        document.getElementById('add-validade').addEventListener('click', function() {
+            const container = document.getElementById('validades-container');
+            const newItem = document.createElement('div');
+            newItem.className = 'validade-item row align-items-center mb-2';
+            
+            newItem.innerHTML = `
+                <div class="col-6">
+                    <input type="date" class="form-control" name="data_validade" required>
+                    <small class="form-text text-muted">Validade</small>
+                </div>
+                <div class="col-4">
+                    <input type="number" class="form-control" name="quantidade" 
+                           min="1" value="1" required>
+                    <small class="form-text text-muted">Quantidade</small>
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-validade">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(newItem);
+            updateRemoveButtons();
+            
+            // Definir data mínima como hoje para o novo campo
+            const dateInput = newItem.querySelector('input[type="date"]');
+            dateInput.min = new Date().toISOString().split('T')[0];
+        });
+
+        // Função para remover campos de validade
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-validade') || e.target.parentElement.classList.contains('remove-validade')) {
+                const item = e.target.closest('.validade-item');
+                item.remove();
+                updateRemoveButtons();
+            }
+        });
+
+        // Função para mostrar/ocultar botões de remoção
+        function updateRemoveButtons() {
+            const items = document.querySelectorAll('.validade-item');
+            items.forEach((item, index) => {
+                const removeBtn = item.querySelector('.remove-validade');
+                if (items.length > 1) {
+                    removeBtn.style.display = 'block';
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            });
+        }
+
+        // Definir data mínima como hoje para todos os campos existentes
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            const today = new Date().toISOString().split('T')[0];
+            
+            dateInputs.forEach(input => {
+                if (input.name === 'data_validade') {
+                    input.min = today;
+                }
+                if (input.name === 'data_armazenado') {
+                    input.value = today;
+                }
+            });
+            
+            updateRemoveButtons();
+        });
     </script>
 </body>
 </html>

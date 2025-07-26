@@ -1,360 +1,1000 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Detalhes do Produto - {{ produto.nome }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }
+{% extends "produtos/base.html" %}
+{% load static %}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+{% block title %}Detalhes do Produto - {{ produto.nome }}{% endblock %}
 
-        .header {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 30px;
-            text-align: center;
+{% block extra_css %}
+<style>
+    .product-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 30px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .product-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1.5" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+    
+    .product-title {
+        font-size: 2.8em;
+        font-weight: 700;
+        margin: 0 0 15px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        position: relative;
+        z-index: 2;
+    }
+    
+    .product-code {
+        font-size: 1.3em;
+        opacity: 0.9;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1.1em;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .status-em-estoque {
+        background: rgba(40, 167, 69, 0.2);
+        color: #d4edda;
+        border: 2px solid rgba(40, 167, 69, 0.5);
+    }
+    
+    .status-sem-estoque {
+        background: rgba(220, 53, 69, 0.2);
+        color: #f8d7da;
+        border: 2px solid rgba(220, 53, 69, 0.5);
+    }
+    
+    .info-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .card-icon {
+        font-size: 1.8em;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        margin: 10px 0;
+        background: #f8f9ff;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .info-row:hover {
+        background: #e9ecff;
+        transform: translateX(5px);
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .info-value {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+    
+    .location-item {
+        background: linear-gradient(135deg, #f8f9ff, #e9ecff);
+        border: 2px solid #667eea;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .location-item.nivel-0 {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #f0fff4, #e6ffed);
+    }
+    
+    .location-item.nivel-2 {
+        border-color: #ffc107;
+        background: linear-gradient(135deg, #fffbf0, #fff8e1);
+    }
+    
+    .location-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    }
+    
+    .location-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .location-title {
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #667eea;
+    }
+    
+    .location-actions {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .location-btn {
+        padding: 6px 10px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .location-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .lotes-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .lote-item {
+        background: #f8f9ff;
+        border: 2px solid #e9ecef;
+        border-radius: 15px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .lote-item.prioridade-alta {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+        animation: pulse-priority 2s infinite;
+    }
+    
+    @keyframes pulse-priority {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    .lote-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .lote-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .lote-numero {
+        font-size: 1.1em;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .lote-validade {
+        font-size: 0.95em;
+        color: #495057;
+    }
+    
+    .lote-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .lote-btn {
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.9em;
+        white-space: nowrap;
+    }
+    
+    .lote-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .lote-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .lote-status,
+    .lote-quantidade,
+    .lote-dias {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95em;
+    }
+    
+    .lote-alert {
+        margin-top: 15px;
+        padding: 10px 15px;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        color: #856404;
+        font-size: 0.9em;
+    }
+    
+    .lote-enderecos {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .lote-enderecos h6 {
+        margin: 0 0 10px 0;
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .endereco-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .endereco-info {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex: 1;
+    }
+    
+    .endereco-codigo {
+        background: #007bff;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.85em;
+    }
+    
+    .endereco-tipo {
+        background: #28a745;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.85em;
+    }
+    
+    .endereco-nivel {
+        background: #ffc107;
+        color: #212529;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.85em;
+    }
+    
+    .endereco-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .status-sem-validade {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .location-address {
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .location-date {
+        font-size: 0.9em;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .lotes-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .lotes-table th {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 18px 15px;
+        font-weight: 600;
+        text-align: left;
+    }
+    
+    .lotes-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .lotes-table tr:nth-child(even) {
+        background: #f8f9ff;
+    }
+    
+    .lotes-table tr:hover {
+        background: #e9ecff;
+        transform: scale(1.01);
+        transition: all 0.3s ease;
+    }
+    
+    .status-valido {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-proximo {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-vence-breve {
+        background: linear-gradient(135deg, #fd7e14, #dc3545);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-vencido {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .actions-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-top: 30px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 25px;
+    }
+    
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 25px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1em;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #212529;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        color: inherit;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+        font-style: italic;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .empty-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .info-cards {
+            grid-template-columns: 1fr;
         }
-
-        .header h1 {
-            color: #333;
-            margin: 0 0 10px 0;
+        
+        .product-title {
             font-size: 2.2em;
         }
-
-        .header .subtitle {
-            color: #666;
-            font-size: 1.1em;
-            margin-bottom: 20px;
+        
+        .action-buttons {
+            flex-direction: column;
         }
-
-        .back-btn {
-            background: linear-gradient(135deg, #6c757d, #5a6268);
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .back-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .info-card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .info-card h3 {
-            color: #333;
-            margin: 0 0 20px 0;
-            font-size: 1.4em;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .info-item:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        .info-value {
-            color: #333;
-            font-weight: 500;
-        }
-
-        .lotes-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .lotes-table th,
-        .lotes-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .lotes-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .status-valido {
-            background: #d4edda;
-            color: #155724;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-
-        .status-proximo {
-            background: #fff3cd;
-            color: #856404;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-
-        .status-vence-breve {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-
-        .status-vencido {
-            background: #dc3545;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-
-        .actions-section {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
+        
         .action-btn {
-            display: inline-block;
-            padding: 12px 25px;
-            margin: 0 10px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
         }
+    }
+</style>
+{% endblock %}
 
-        .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            color: #212529;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: white;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            padding: 20px;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .location-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border-left: 4px solid #007bff;
-        }
-
-        .location-item:last-child {
-            margin-bottom: 0;
-        }
-
-        @media (max-width: 768px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .action-btn {
-                display: block;
-                margin: 10px 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <a href="{% url 'pagina_principal' %}" class="back-btn">
-                ← Voltar ao Painel
-            </a>
-            <h1>📦 {{ produto.nome }}</h1>
-            <div class="subtitle">Código: <strong>{{ produto.codigo }}</strong></div>
-        </div>
-
-        <div class="content-grid">
-            <!-- Informações Básicas -->
-            <div class="info-card">
-                <h3>📋 Informações Básicas</h3>
-                <div class="info-item">
-                    <span class="info-label">Nome:</span>
-                    <span class="info-value">{{ produto.nome }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Código:</span>
-                    <span class="info-value">{{ produto.codigo }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Total de Lotes:</span>
-                    <span class="info-value">{{ total_lotes }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Status:</span>
-                    <span class="info-value">
-                        {% if tem_estoque %}
-                            <span style="color: #28a745; font-weight: bold;">✅ Em Estoque</span>
-                        {% else %}
-                            <span style="color: #dc3545; font-weight: bold;">❌ Sem Estoque</span>
-                        {% endif %}
-                    </span>
+{% block content %}
+<div class="container-fluid">
+    <!-- Header do Produto -->
+    <div class="product-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="product-title">
+                    <i class="fas fa-box"></i>
+                    {{ produto.nome }}
+                </h1>
+                <div class="product-code">
+                    <i class="fas fa-barcode"></i>
+                    Código: <strong>{{ produto.codigo }}</strong>
                 </div>
             </div>
-
-            <!-- Localização -->
-            <div class="info-card">
-                <h3>📍 Localização de Armazenamento</h3>
-                {% if estoques %}
-                    {% for estoque in estoques %}
-                        <div class="location-item">
-                            <div><strong>{{ estoque.local.categoria_armazenamento|default:"Local" }}</strong></div>
-                            <div>🛣️ Rua {{ estoque.local.rua }}, 🏢 Prédio {{ estoque.local.predio }}</div>
-                            <div>📍 Nível {{ estoque.local.nivel }}, AP {{ estoque.local.ap }}</div>
-                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                                📅 Armazenado em: {{ estoque.data_armazenado|date:"d/m/Y" }}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-state">
-                        📦 Produto não está armazenado em nenhum local
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Lotes e Validades -->
-        <div class="info-card full-width">
-            <h3>📅 Lotes e Validades</h3>
-            {% if lotes_com_status %}
-                <table class="lotes-table">
-                    <thead>
-                        <tr>
-                            <th>Número do Lote</th>
-                            <th>Data de Validade</th>
-                            <th>Quantidade</th>
-                            <th>Status</th>
-                            <th>Dias Restantes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in lotes_com_status %}
-                            <tr>
-                                <td>{{ item.lote.numero_lote|default:"S/N" }}</td>
-                                <td>{{ item.lote.validade|date:"d/m/Y" }}</td>
-                                <td>{{ item.lote.quantidade|default:"1" }}</td>
-                                <td>
-                                    <span class="{{ item.status_class }}">
-                                        {{ item.status }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if item.dias_para_vencer >= 0 %}
-                                        {{ item.dias_para_vencer }} dias
-                                    {% else %}
-                                        {{ item.dias_para_vencer|add:"-1"|add:"-1"|add:"2" }} dias (vencido)
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <div class="empty-state">
-                    📅 Nenhum lote cadastrado para este produto
+            <div class="col-md-4 text-end">
+                <div class="status-badge {% if tem_estoque %}status-em-estoque{% else %}status-sem-estoque{% endif %}">
+                    {% if tem_estoque %}
+                        <i class="fas fa-check-circle"></i> Em Estoque
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle"></i> Sem Estoque
+                    {% endif %}
                 </div>
-            {% endif %}
-        </div>
-
-        <!-- Ações -->
-        <div class="actions-section">
-            <h3>⚙️ Ações Disponíveis</h3>
-            <div style="margin-top: 20px;">
-                {% if tem_estoque %}
-                    {% for estoque in estoques %}
-                        <a href="{% url 'editar_estoque' estoque.id %}" class="action-btn btn-warning">
-                            ✏️ Editar Estoque
-                        </a>
-                        <a href="{% url 'remover_produto' estoque.id %}" 
-                           class="action-btn btn-danger"
-                           onclick="return confirm('Tem certeza que deseja remover este produto do estoque?')">
-                            🗑️ Remover do Estoque
-                        </a>
-                    {% endfor %}
-                {% endif %}
-                
-                <a href="{% url 'editar_produto' produto.id %}" class="action-btn btn-primary">
-                    📝 Editar Produto
-                </a>
-                
-                <a href="{% url 'armazenar_produto' produto.id %}" class="action-btn btn-primary">
-                    📦 Armazenar
-                </a>
             </div>
         </div>
     </div>
-</body>
-</html>
+    
+    <!-- Cards de Informações -->
+    <div class="info-cards">
+        <!-- Informações Básicas -->
+        <div class="info-card">
+            <h3 class="card-title">
+                <i class="card-icon fas fa-info-circle"></i>
+                Informações Básicas
+            </h3>
+            
+            <div class="info-row">
+                <span class="info-label">
+                    <i class="fas fa-tag text-primary"></i>
+                    Nome do Produto
+                </span>
+                <span class="info-value">{{ produto.nome }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">
+                    <i class="fas fa-barcode text-info"></i>
+                    Código
+                </span>
+                <span class="info-value">{{ produto.codigo }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">
+                    <i class="fas fa-layer-group text-warning"></i>
+                    Categoria
+                </span>
+                <span class="info-value">{{ produto.categoria|default:"Não informada" }}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">
+                    <i class="fas fa-calendar-alt text-success"></i>
+                    Total de Lotes
+                </span>
+                <span class="info-value">
+                    <span class="badge bg-primary fs-6">{{ total_lotes }}</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Localização -->
+        <div class="info-card">
+            <h3 class="card-title">
+                <i class="card-icon fas fa-map-marker-alt"></i>
+                Localização de Armazenamento
+            </h3>
+            
+            {% if estoques_processados %}
+                {% for estoque_info in estoques_processados %}
+                    <div class="location-item {% if estoque_info.nivel == '0' %}nivel-0{% else %}nivel-2{% endif %}">
+                        <div class="location-header">
+                            <div class="location-title">
+                                <i class="fas fa-warehouse"></i>
+                                {{ estoque_info.tipo }} - Nível {{ estoque_info.nivel }}
+                            </div>
+                            <div class="location-actions">
+                                <a href="{% url 'editar_estoque' estoque_info.estoque.id %}" 
+                                   class="btn btn-sm btn-warning location-btn" 
+                                   title="Editar estoque">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'remover_produto' estoque_info.estoque.id %}" 
+                                   class="btn btn-sm btn-danger location-btn"
+                                   onclick="return confirm('⚠️ Confirma a remoção deste produto do estoque?')"
+                                   title="Remover do estoque">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% if estoque_info.pode_abastecer %}
+                                    <button class="btn btn-sm btn-success location-btn btn-abastecer" 
+                                            data-estoque-id="{{ estoque_info.estoque.id }}"
+                                            data-bs-toggle="modal" data-bs-target="#modalAbastecer"
+                                            title="Abastecer para nível 0">
+                                        <i class="fas fa-arrow-down"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="location-address">
+                            <i class="fas fa-road"></i> Rua {{ estoque_info.estoque.local.rua }} • 
+                            <i class="fas fa-building"></i> Prédio {{ estoque_info.estoque.local.predio }} • 
+                            <i class="fas fa-layer-group"></i> Nível {{ estoque_info.estoque.local.nivel }} • 
+                            <i class="fas fa-door-open"></i> AP {{ estoque_info.estoque.local.ap }}
+                        </div>
+                        {% if estoque_info.estoque.local.codigo %}
+                            <div class="location-address">
+                                <i class="fas fa-qrcode"></i> Código: <strong>{{ estoque_info.estoque.local.codigo }}</strong>
+                            </div>
+                        {% endif %}
+                        <div class="location-date">
+                            <i class="fas fa-calendar-check"></i>
+                            Armazenado em: {{ estoque_info.estoque.data_armazenado|date:"d/m/Y" }}
+                            {% if estoque_info.estoque.data_validade %}
+                                • <i class="fas fa-clock"></i> Validade: {{ estoque_info.estoque.data_validade|date:"d/m/Y" }}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <strong>Produto não armazenado</strong><br>
+                    Este produto não está armazenado em nenhum local no momento.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Lotes e Validades -->
+    <div class="info-card">
+        <h3 class="card-title">
+            <i class="card-icon fas fa-calendar-alt"></i>
+            Lotes e Validades (Ordem FIFO)
+        </h3>
+        
+        {% if lotes_com_status %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Regra FIFO:</strong> Produtos com validade mais próxima têm prioridade no abastecimento.
+            </div>
+            
+            <div class="lotes-list">
+                {% for item in lotes_com_status %}
+                    <div class="lote-item {% if item.prioridade <= 2 %}prioridade-alta{% endif %}">
+                        <div class="lote-header">
+                            <div class="lote-info">
+                                <div class="lote-numero">
+                                    <i class="fas fa-hashtag"></i>
+                                    <strong>{{ item.lote.numero_lote|default:"S/N" }}</strong>
+                                </div>
+                                <div class="lote-validade">
+                                    {% if item.lote.validade %}
+                                        <i class="fas fa-calendar"></i>
+                                        {{ item.lote.validade|date:"d/m/Y" }}
+                                    {% else %}
+                                        <i class="fas fa-calendar-times"></i>
+                                        Sem validade
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="lote-actions">
+                                {% if item.pode_abastecer and tem_nivel_2 %}
+                                    <button class="btn btn-sm btn-success lote-btn btn-abastecer" 
+                                            data-lote-id="{{ item.lote.id }}"
+                                            data-bs-toggle="modal" data-bs-target="#modalAbastecer"
+                                            title="Abastecer este lote">
+                                        <i class="fas fa-arrow-down"></i> Abastecer
+                                    </button>
+                                {% elif not tem_nivel_2 %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-info-circle"></i> Sem estoque nível 2
+                                    </span>
+                                {% elif tem_nivel_0 %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-check"></i> Já no nível 0
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Botão de editar - apenas um por lote -->
+                                {% if estoques_processados %}
+                                    <button class="btn btn-sm btn-warning lote-btn ms-1" 
+                                            data-bs-toggle="modal" data-bs-target="#modalEditarEndereco"
+                                            data-endereco-id="{{ estoques_processados.0.estoque.local.id }}"
+                                            data-endereco-codigo="{{ estoques_processados.0.estoque.local.codigo }}"
+                                            data-endereco-tipo="{{ estoques_processados.0.estoque.local.categoria_armazenamento }}"
+                                            data-endereco-nivel="{{ estoques_processados.0.estoque.local.nivel }}"
+                                            data-endereco-rua="{{ estoques_processados.0.estoque.local.rua }}"
+                                            data-endereco-predio="{{ estoques_processados.0.estoque.local.predio }}"
+                                            data-endereco-ap="{{ estoques_processados.0.estoque.local.ap }}"
+                                            title="Editar {{ estoques_processados.0.estoque.local.codigo|default:'endereço' }}">
+                                        EDITAR
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-sm btn-secondary lote-btn ms-1" disabled title="Produto não armazenado">
+                                        EDITAR
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="lote-details">
+                            <div class="lote-status">
+                                <span class="{{ item.status_class }}">
+                                    {{ item.status }}
+                                </span>
+                            </div>
+                            <div class="lote-quantidade">
+                                <i class="fas fa-boxes"></i>
+                                Qtd: <strong>{{ item.lote.quantidade|default:"1" }}</strong>
+                            </div>
+                            <div class="lote-dias">
+                                {% if item.dias_para_vencer is not None %}
+                                    {% if item.dias_para_vencer >= 0 %}
+                                        <i class="fas fa-clock text-success"></i>
+                                        {{ item.dias_para_vencer }} dias restantes
+                                    {% else %}
+                                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                                        Vencido há {{ item.dias_para_vencer|add:"-1"|floatformat:"0" }} dias
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fas fa-infinity text-muted"></i>
+                                    Sem prazo de validade
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if item.prioridade <= 2 %}
+                            <div class="lote-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Prioridade FIFO:</strong> Este lote deve ser abastecido primeiro!
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <strong>Nenhum lote cadastrado</strong><br>
+                Este produto ainda não possui lotes com datas de validade cadastradas.
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Ações Disponíveis -->
+    <div class="actions-card">
+        <h3 class="card-title">
+            <i class="card-icon fas fa-tools"></i>
+            Ações Disponíveis
+        </h3>
+        
+        <div class="action-buttons">
+            <a href="{% url 'editar_produto' produto.id %}" class="action-btn btn-primary">
+                <i class="fas fa-edit"></i>
+                Editar Produto
+            </a>
+            
+            {% if not tem_estoque %}
+                <a href="{% url 'armazenar_produto' produto.id %}" class="action-btn btn-success">
+                    <i class="fas fa-warehouse"></i>
+                    Armazenar Produto
+                </a>
+            {% endif %}
+            
+            <a href="{% url 'listar_produtos' %}" class="action-btn btn-primary">
+                <i class="fas fa-list"></i>
+                Lista de Produtos
+            </a>
+            
+            <a href="{% url 'movimentacao_estoque' %}" class="action-btn btn-primary">
+                <i class="fas fa-exchange-alt"></i>
+                Movimentação
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Abastecimento -->
+<div class="modal fade" id="modalAbastecer" tabindex="-1" aria-labelledby="modalAbastecerLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalAbastecerLabel">
+                    <i class="fas fa-arrow-down"></i> Abastecer Produto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="post" action="{% url 'movimentacao_estoque' %}">
+                {% csrf_token %}
+                <input type="hidden" name="acao" value="abastecer">
+                <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                <input type="hidden" name="estoque_origem_id" id="estoqueOrigemId">
+                
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Abastecimento FIFO:</strong> Produto será movido do nível 2 para o nível 0 seguindo a regra do mais antigo primeiro.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="endereco_destino_id" class="form-label">Endereço de Destino (Nível 0)</label>
+                        <select class="form-select" name="endereco_destino_id" id="endereco_destino_id" required>
+                            <option value="">Selecione um endereço...</option>
+                            {% for endereco in enderecos_nivel_0 %}
+                                <option value="{{ endereco.id }}">
+                                    {{ endereco.codigo|default:endereco }} - 
+                                    R{{ endereco.rua }}P{{ endereco.predio }}N{{ endereco.nivel }}AP{{ endereco.ap }}
+                                    ({{ endereco.categoria_armazenamento|capfirst }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Atenção:</strong> Esta operação seguirá a regra FIFO (First In, First Out) - produtos mais antigos têm prioridade.
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-arrow-down"></i> Confirmar Abastecimento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Endereço -->
+<div class="modal fade" id="modalEditarEndereco" tabindex="-1" aria-labelledby="modalEditarEnderecoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalEditarEnderecoLabel">
+                    <i class="fas fa-edit"></i> Editar Localização
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="post" action="{% url 'editar_endereco' 0 %}" id="formEditarEndereco">
+                {% csrf_token %}
+                
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Editar Localização:</strong> Você pode alterar o tipo e outras informações do endereço.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="endereco_codigo_edit" class="form-label">Código do Endereço</label>
+                        <input type="text" class="form-control" id="endereco_codigo_edit" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="categoria_armazenamento_edit" class="form-label">Tipo do Endereço</label>
+                        <select class="form-select" name="categoria_armazenamento" id="categoria_armazenamento_edit" required>
+                            <option value="inteiro">🔵 Palete Fechado</option>
+                            <option value="meio">🟡 Saída</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="rua_edit" class="form-label">Rua</label>
+                            <input type="text" class="form-control" name="rua" id="rua_edit" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="predio_edit" class="form-label">Prédio</label>
+                            <input type="text" class="form-control" name="predio" id="predio_edit" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="nivel_edit" class="form-label">Nível</label>
+                            <input type="text" class="form-control" name="nivel" id="nivel_edit" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="ap_edit" class="form-label">AP</label>
+                            <input type="text" class="form-control" name="ap" id="ap_edit" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de abastecimento
+    const modalAbastecer = document.getElementById('modalAbastecer');
+    const btnAbastecer = document.querySelectorAll('.btn-abastecer');
+    
+    btnAbastecer.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const estoqueId = this.getAttribute('data-estoque-id');
+            if (estoqueId) {
+                document.getElementById('estoqueOrigemId').value = estoqueId;
+            }
+        });
+    });
+    
+    // Modal de editar endereço
+    const modalEditarEndereco = document.getElementById('modalEditarEndereco');
+    const btnEditarEndereco = document.querySelectorAll('[data-bs-target="#modalEditarEndereco"]');
+    
+    btnEditarEndereco.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const enderecoId = this.getAttribute('data-endereco-id');
+            const enderecoCodigo = this.getAttribute('data-endereco-codigo');
+            const enderecoTipo = this.getAttribute('data-endereco-tipo');
+            const enderecoNivel = this.getAttribute('data-endereco-nivel');
+            const enderecoRua = this.getAttribute('data-endereco-rua');
+            const enderecoPredio = this.getAttribute('data-endereco-predio');
+            const enderecoAp = this.getAttribute('data-endereco-ap');
+            
+            // Atualizar action do formulário
+            const form = document.getElementById('formEditarEndereco');
+            form.action = form.action.replace(/\/\d+\/$/, `/${enderecoId}/`);
+            
+            // Preencher campos
+            document.getElementById('endereco_codigo_edit').value = enderecoCodigo || '';
+            document.getElementById('categoria_armazenamento_edit').value = enderecoTipo || '';
+            document.getElementById('nivel_edit').value = enderecoNivel || '';
+            document.getElementById('rua_edit').value = enderecoRua || '';
+            document.getElementById('predio_edit').value = enderecoPredio || '';
+            document.getElementById('ap_edit').value = enderecoAp || '';
+        });
+    });
+});
+</script>
+{% endblock %}

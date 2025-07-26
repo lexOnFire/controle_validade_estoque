@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Controle de Estoque</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 2.5em;
+        }
+
+        .toggle-panel-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .toggle-panel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .painel-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .painel-header {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .painel-content {
+            max-height: 600px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .painel-content.hidden {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .main-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-main.success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+
+        .btn-main.success:hover {
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-main.warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .btn-main.warning:hover {
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+        }
+
+        .btn-main.info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .btn-main.info:hover {
+            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.4);
+        }
+
+        .btn-main.danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .btn-main.danger:hover {
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        /* Seção de busca rápida */
+        .quick-search {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .quick-search h3 {
+            color: #333;
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .btn-search {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: fit-content;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        /* Seção do painel integrado */
+        .painel-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .painel-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .painel-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .painel-content {
+            max-height: 800px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+
+        /* Estilos da tabela */
+        .predio-section {
+            margin-bottom: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .predio-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            margin: 0;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .rua-section {
+            margin-bottom: 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rua-title {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #495057;
+            padding: 12px 16px;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .predio-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            table-layout: fixed;
+            min-width: 1500px;
+        }
+
+        .predio-table th {
+            background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding: 12px 8px;
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        .predio-table td {
+            padding: 12px 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: top;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        /* Larguras das colunas */
+        .predio-table th:nth-child(1), .predio-table td:nth-child(1) { width: 7%; }  /* Rua */
+        .predio-table th:nth-child(2), .predio-table td:nth-child(2) { width: 7%; }  /* Prédio */
+        .predio-table th:nth-child(3), .predio-table td:nth-child(3) { width: 5%; }  /* Nível */
+        .predio-table th:nth-child(4), .predio-table td:nth-child(4) { width: 5%; }  /* AP */
+        .predio-table th:nth-child(5), .predio-table td:nth-child(5) { width: 7%; }  /* Código */
+        .predio-table th:nth-child(6), .predio-table td:nth-child(6) { width: 18%; } /* Nome */
+        .predio-table th:nth-child(7), .predio-table td:nth-child(7) { width: 9%; } /* Validade 1 */
+        .predio-table th:nth-child(8), .predio-table td:nth-child(8) { width: 9%; } /* Validade 2 */
+        .predio-table th:nth-child(9), .predio-table td:nth-child(9) { width: 9%; } /* Validade 3 */
+        .predio-table th:nth-child(10), .predio-table td:nth-child(10) { width: 12%; } /* Data Alteração */
+        .predio-table th:nth-child(11), .predio-table td:nth-child(11) { width: 12%; } /* Ações */
+
+        .predio-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .predio-table tbody tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        /* Status de validade */
+        .status-vencido {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .status-vence-breve {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+
+        .status-proximo {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .status-valido {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-sem-lote {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Botões de ação na tabela */
+        .actions-table {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-table {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.75em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            min-width: 60px;
+            justify-content: center;
+        }
+
+        .btn-table-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-table-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-table-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-table-warning:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
+        .btn-table-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-table-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        /* === NOVOS ESTILOS PARA LAYOUT DE CARDS === */
+
+        .rua-content {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .rua-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .rua-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #495057, #343a40);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rua-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .predio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .predio-stats {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .enderecos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .endereco-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+
+        .endereco-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .endereco-card.endereco-vazio {
+            border: 2px dashed #dee2e6;
+            background: #f8f9fa;
+        }
+
+        .endereco-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .endereco-vazio .endereco-header {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        }
+
+        .endereco-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .endereco-icon {
+            font-size: 1.2em;
+        }
+
+        .endereco-details strong {
+            font-size: 1.1em;
+            color: #495057;
+            display: block;
+        }
+
+        .endereco-details small {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+        }
+
+        .badge-empty {
+            background: linear-gradient(135deg, #f8d7da, #f1b2b7);
+            color: #721c24;
+        }
+
+        .endereco-content {
+            padding: 0;
+        }
+
+        .produtos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .produto-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            transition: all 0.3s ease;
+        }
+
+        .produto-card:hover {
+            background: #e9ecef;
+            border-left-color: #0056b3;
+        }
+
+        .produto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .produto-nome {
+            margin: 0 0 5px 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .produto-codigo {
+            background: #495057;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-family: monospace;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-vencido {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-vence-em-breve {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .status-proximo-ao-vencimento {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .status-valido {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-sem-lote {
+            background: #6c757d;
+            color: white;
+        }
+
+        .produto-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .dias-vencer {
+            color: #dc3545;
+            font-weight: 500;
+        }
+
+        .produto-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-action.btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-action.btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .btn-action.btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-action.btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
+        .btn-action.btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-action.btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .endereco-vazio-content {
+            padding: 30px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .vazio-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .vazio-text {
+            margin: 0 0 15px 0;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .main-buttons {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .enderecos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .endereco-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .produto-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho com título -->
+        <div class="header">
+            <h1>🏪 Sistema de Controle de Estoque</h1>
+            
+            <!-- Botões principais -->
+            <div class="main-buttons">
+                <a href="{% url 'cadastrar_produto' %}" class="btn-main success">
+                    ➕ Cadastrar Produto
+                </a>
+                <a href="{% url 'cadastrar_enderecos' %}" class="btn-main info">
+                    🏢 Cadastrar Endereço
+                </a>
+                <a href="{% url 'relatorio_completo' %}" class="btn-main warning">
+                    📊 Relatório Completo
+                </a>
+                <a href="{% url 'listar_produtos' %}" class="btn-main">
+                    📋 Listar Produtos
+                </a>
+                <a href="{% url 'alertas' %}" class="btn-main danger">
+                    🔔 Alertas
+                </a>
+                <a href="{% url 'historico_movimentacoes' %}" class="btn-main">
+                    📈 Histórico
+                </a>
+                <a href="{% url 'importar_produtos_csv' %}" class="btn-main info">
+                    📦 Importar CSV
+                </a>
+                <a href="{% url 'exportar_estoque' %}" class="btn-main warning">
+                    📤 Exportar
+                </a>
+            </div>
+        </div>
+
+        <!-- Painel do Estoque Fixo -->
+        <div class="painel-container">
+            <div class="painel-header">
+                <h2>📦 Painel do Estoque</h2>
+                <button class="toggle-panel-btn" onclick="togglePanel()">
+                    <span id="toggle-text">👁️ Mostrar Painel</span>
+                </button>
+            </div>
+            <div class="painel-content hidden" id="painel-content">
+                {% if organizacao %}
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ total_enderecos }}</div>
+                            <div class="stat-label">Total de Endereços</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ enderecos_com_estoque }}</div>
+                            <div class="stat-label">Com Produtos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ enderecos_vazios }}</div>
+                            <div class="stat-label">Vazios</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ total_produtos }}</div>
+                            <div class="stat-label">Produtos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ taxa_ocupacao }}%</div>
+                            <div class="stat-label">Taxa de Ocupação</div>
+                        </div>
+                    </div>
+
+                    <div class="painel-estoque">
+                        {% for rua, predios in organizacao.items %}
+                            <div class="rua-container">
+                                <div class="rua-header">
+                                    <h3>🛣️ Rua {{ rua }}</h3>
+                                    <button class="collapse-btn" onclick="toggleRua('rua-{{ rua|slugify }}')">
+                                        <span id="toggle-rua-{{ rua|slugify }}">▼</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="rua-content" id="rua-{{ rua|slugify }}">
+                                    {% for predio, enderecos_list in predios.items %}
+                                        <div class="predio-container">
+                                            <div class="predio-header">
+                                                <h4>🏢 Prédio {{ predio }}</h4>
+                                                <span class="predio-stats">{{ enderecos_list|length }} endereços</span>
+                                            </div>
+                                            
+                                            <div class="enderecos-grid">
+                                                {% for endereco_info in enderecos_list %}
+                                                    <div class="endereco-card {% if not endereco_info.tem_produtos %}endereco-vazio{% endif %}">
+                                                        <div class="endereco-header">
+                                                            <div class="endereco-title">
+                                                                <span class="endereco-icon">📍</span>
+                                                                <div class="endereco-details">
+                                                                    <strong>{{ endereco_info.endereco.categoria_armazenamento|default:"Local" }}</strong>
+                                                                    <small>Nível {{ endereco_info.endereco.nivel }}, AP {{ endereco_info.endereco.ap }}</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="endereco-badge">
+                                                                {% if endereco_info.tem_produtos %}
+                                                                    <span class="badge badge-success">{{ endereco_info.total_produtos }} produto{{ endereco_info.total_produtos|pluralize }}</span>
+                                                                {% else %}
+                                                                    <span class="badge badge-empty">Vazio</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="endereco-content">
+                                                            {% if endereco_info.tem_produtos %}
+                                                                <div class="produtos-list">
+                                                                    {% for produto_info in endereco_info.produtos %}
+                                                                        <div class="produto-card">
+                                                                            <div class="produto-header">
+                                                                                <div class="produto-info">
+                                                                                    <h5 class="produto-nome">{{ produto_info.produto.nome }}</h5>
+                                                                                    <span class="produto-codigo">{{ produto_info.produto.codigo }}</span>
+                                                                                </div>
+                                                                                <div class="produto-status">
+                                                                                    <span class="status-badge status-{{ produto_info.status_validade|slugify }}">
+                                                                                        {{ produto_info.status_validade }}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="produto-details">
+                                                                                <div class="detail-row">
+                                                                                    <span class="detail-label">📅 Validade:</span>
+                                                                                    <span class="detail-value">
+                                                                                        {% if produto_info.proxima_validade %}
+                                                                                            {{ produto_info.proxima_validade|date:"d/m/Y" }}
+                                                                                            {% if produto_info.dias_para_vencer < 30 %}
+                                                                                                <small class="dias-vencer">({{ produto_info.dias_para_vencer }} dias)</small>
+                                                                                            {% endif %}
+                                                                                        {% else %}
+                                                                                            <span class="text-muted">Sem data</span>
+                                                                                        {% endif %}
+                                                                                    </span>
+                                                                                </div>
+                                                                                
+                                                                                <div class="detail-row">
+                                                                                    <span class="detail-label">📦 Lotes:</span>
+                                                                                    <span class="detail-value">{{ produto_info.total_lotes }} lote{{ produto_info.total_lotes|pluralize }}</span>
+                                                                                </div>
+                                                                                
+                                                                                <div class="detail-row">
+                                                                                    <span class="detail-label">📍 Armazenado:</span>
+                                                                                    <span class="detail-value">{{ produto_info.estoque.data_armazenado|date:"d/m/Y" }}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="produto-actions">
+                                                                                <a href="{% url 'detalhes_produto' produto_info.produto.id %}" 
+                                                                                   class="btn-action btn-primary" title="Ver detalhes">
+                                                                                    👁️ Detalhes
+                                                                                </a>
+                                                                                <a href="{% url 'editar_estoque' produto_info.estoque.id %}" 
+                                                                                   class="btn-action btn-warning" title="Editar">
+                                                                                    ✏️ Editar
+                                                                                </a>
+                                                                                <a href="{% url 'remover_produto' produto_info.estoque.id %}" 
+                                                                                   class="btn-action btn-danger" title="Remover"
+                                                                                   onclick="return confirm('Tem certeza que deseja remover este produto?')">
+                                                                                    🗑️ Remover
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            {% else %}
+                                                                <div class="endereco-vazio-content">
+                                                                    <div class="vazio-icon">📭</div>
+                                                                    <p class="vazio-text">Endereço disponível</p>
+                                                                    <a href="{% url 'buscar_produto_endereco' endereco_info.endereco.id %}" 
+                                                                       class="btn-action btn-primary">
+                                                                        🔍 Pesquisar Produto
+                                                                    </a>
+                                                                </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="padding: 20px; text-align: center; color: #6c757d;">
+                        <p>📦 Nenhum produto encontrado no estoque.</p>
+                        <a href="{% url 'cadastrar_produto' %}" class="btn-main success" style="display: inline-block; margin-top: 10px;">
+                            ➕ Cadastrar Primeiro Produto
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Seção de busca rápida -->
+        <div class="quick-search">
+            <h3>🔍 Busca Rápida</h3>
+            <form method="GET" action="" class="search-form">
+                <div class="form-group">
+                    <label for="busca_codigo">Código do Produto:</label>
+                    <input type="text" 
+                           id="busca_codigo" 
+                           name="busca_codigo" 
+                           placeholder="Digite o código para buscar..."
+                           value="{{ busca_codigo }}"
+                           class="form-input">
+                </div>
+                <button type="submit" class="btn-search">
+                    🔍 Buscar
+                </button>
+            </form>
+            
+            {% if busca_codigo and not resultado_busca %}
+                <div style="margin-top: 15px; padding: 15px; background: #f8d7da; color: #721c24; border-radius: 8px; text-align: center;">
+                    ❌ Produto com código "{{ busca_codigo }}" não encontrado.
+                    <a href="{% url 'cadastrar_produto' %}?codigo={{ busca_codigo }}" style="color: #721c24; font-weight: bold; text-decoration: underline;">
+                        Clique aqui para cadastrá-lo
+                    </a>
+                </div>
+            {% elif resultado_busca %}
+                <div style="margin-top: 15px; padding: 15px; background: #d4edda; color: #155724; border-radius: 8px; text-align: center;">
+                    ✅ Produto encontrado: <strong>{{ resultado_busca.nome }}</strong> (Código: {{ resultado_busca.codigo }})
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- JavaScript para toggle do painel -->
+        <script>
+            function togglePanel() {
+                const panel = document.getElementById('painel-content');
+                const toggleText = document.getElementById('toggle-text');
+                
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    toggleText.textContent = '🙈 Ocultar Painel';
+                } else {
+                    panel.classList.add('hidden');
+                    toggleText.textContent = '👁️ Mostrar Painel';
+                }
+            }
+
+            function toggleRua(ruaId) {
+                const content = document.getElementById(ruaId);
+                const toggle = document.getElementById('toggle-' + ruaId);
+                
+                if (content.classList.contains('collapsed')) {
+                    content.classList.remove('collapsed');
+                    toggle.textContent = '▼';
+                } else {
+                    content.classList.add('collapsed');
+                    toggle.textContent = '▶';
+                }
+            }
+
+            // Inicializar todas as ruas como expandidas
+            document.addEventListener('DOMContentLoaded', function() {
+                const ruaContents = document.querySelectorAll('.rua-content');
+                ruaContents.forEach(content => {
+                    content.classList.remove('collapsed');
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

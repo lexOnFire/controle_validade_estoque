@@ -105,6 +105,8 @@ class Armazenamento(models.Model):
         ('inteiro', 'Palete Fechado (Nível 2)'),
         ('meio', 'Saída (Nível 0)'),
     ]
+    
+    # Campos existentes
     categoria_armazenamento = models.CharField(max_length=10, choices=CATEGORIA_CHOICES, default='inteiro')
     rua = models.CharField(max_length=50)
     predio = models.CharField(max_length=50)
@@ -113,9 +115,23 @@ class Armazenamento(models.Model):
     livre = models.BooleanField(default=True)
     capacidade_maxima = models.PositiveIntegerField(default=1)
     observacoes = models.TextField(blank=True, null=True)
+    
+    # Novos campos para sistema melhorado
+    codigo = models.CharField(max_length=20, unique=True, blank=True, null=True, 
+                             verbose_name='Código do Endereço',
+                             help_text='Código único no formato RUA-PRÉDIO-NÍVEL-AP')
+    descricao = models.CharField(max_length=200, blank=True, null=True,
+                               verbose_name='Descrição',
+                               help_text='Descrição adicional do endereço')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo',
+                               help_text='Se o endereço está ativo para uso')
+    data_criacao = models.DateTimeField(auto_now_add=True, null=True, verbose_name='Data de Criação')
+    data_modificacao = models.DateTimeField(auto_now=True, null=True, verbose_name='Última Modificação')
 
     class Meta:
-        ordering = ['predio', 'rua', 'nivel', 'ap']
+        ordering = ['rua', 'predio', 'nivel', 'ap']
+        verbose_name = 'Endereço de Armazenamento'
+        verbose_name_plural = 'Endereços de Armazenamento'
 
     def clean(self):
         """Validação customizada para endereços"""
@@ -126,19 +142,42 @@ class Armazenamento(models.Model):
             raise ValidationError({
                 'categoria_armazenamento': 'Endereços no nível 0 devem ser do tipo "meio" (área de saída).'
             })
+        
+        # Gerar código automático se não fornecido
+        if not self.codigo:
+            self.codigo = self.gerar_codigo()
     
     def save(self, *args, **kwargs):
-        """Auto-correção: força nível 0 como 'meio'"""
+        """Auto-correção: força nível 0 como 'meio' e gera código"""
         # Garantir que nível 0 seja sempre 'meio'
         if str(self.nivel) == '0':
             self.categoria_armazenamento = 'meio'
         
+        # Gerar código automático se não fornecido
+        if not self.codigo:
+            self.codigo = self.gerar_codigo()
+        
         # Executar validação antes de salvar
         self.full_clean()
         super().save(*args, **kwargs)
-
+    
+    def gerar_codigo(self):
+        """Gera código único para o endereço"""
+        return f"{str(self.rua).zfill(2)}-{str(self.predio).zfill(2)}-{str(self.nivel).zfill(2)}-{str(self.ap).zfill(2)}"
+    
     def __str__(self):
-        return f"{self.rua} - {self.predio} - {self.nivel} - {self.ap}"
+        if self.codigo:
+            return f"{self.codigo} ({self.rua}-{self.predio}-{self.nivel}-{self.ap})"
+        return f"{self.rua}-{self.predio}-{self.nivel}-{self.ap}"
+    
+    def get_endereco_completo(self):
+        """Retorna endereço formatado"""
+        return f"Rua {self.rua}, Prédio {self.predio}, Nível {self.nivel}, AP {self.ap}"
+    
+    def get_qr_url(self):
+        """Retorna URL para QR Code do endereço"""
+        from django.urls import reverse
+        return reverse('qr_endereco', args=[self.id])
     
     def ocupacao_atual(self):
         """Retorna quantos produtos estão armazenados neste local"""
@@ -149,11 +188,30 @@ class Armazenamento(models.Model):
         if self.capacidade_maxima > 0:
             return (self.ocupacao_atual() / self.capacidade_maxima) * 100
         return 0
+    
+    def get_status_display(self):
+        """Retorna status formatado do endereço"""
+        ocupacao = self.ocupacao_atual()
+        if ocupacao == 0:
+            return "🟢 Vazio"
+        elif ocupacao >= self.capacidade_maxima:
+            return "🔴 Cheio"
+        else:
+            return f"🟡 Parcial ({ocupacao}/{self.capacidade_maxima})"
+    
+    def get_tipo_display(self):
+        """Retorna tipo formatado do endereço"""
+        if self.categoria_armazenamento == 'inteiro':
+            return "🔵 Palete Fechado"
+        else:
+            return "🟡 Saída"
 
 class Estoque(models.Model):
     produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
     local = models.ForeignKey(Armazenamento, on_delete=models.CASCADE)
     data_armazenado = models.DateField()
+    data_validade = models.DateField(null=True, blank=True)
+    data_alteracao = models.DateTimeField(auto_now=True, null=True, blank=True)
     usuario_responsavel = models.CharField(max_length=100, blank=True, null=True)
     observacoes = models.TextField(blank=True, null=True)
     
@@ -169,6 +227,7 @@ class HistoricoMovimentacao(models.Model):
         ('entrada', 'Entrada'),
         ('saida', 'Saída'),
         ('transferencia', 'Transferência'),
+        ('atualizacao_fifo', 'Atualização FIFO'),
         ('ajuste', 'Ajuste de Estoque'),
         ('vencimento', 'Remoção por Vencimento'),
     ]

@@ -5,6 +5,7 @@ from .views import cadastrar_produto
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('principal/', views.pagina_principal, name='pagina_principal'),
+    path('api/buscar-produto/', views.buscar_produto_api, name='buscar_produto_api'),
     path('buscar/',views.buscar_produto,name='buscar_produto'),
     path('perguntar/<int:produto_id>/',views.perguntar_armazenar,name='perguntar_armazenar'),
     path('armazenar/<int:produto_id>/',views.armazenar_produto,name='armazenar_produto'),
@@ -35,4 +36,11 @@ urlpatterns = [
     path('importar-csv/', views.importar_produtos_csv, name='importar_produtos_csv'),
     path('importar-abastecimento/', views.importar_abastecimento_csv, name='importar_abastecimento_csv'),
     path('extrair-produtos/', views.extrair_produtos_abastecimento, name='extrair_produtos_abastecimento'),
+    path('movimentacao/', views.movimentacao_estoque, name='movimentacao_estoque'),
+    path('movimentacao-estoque/', views.movimentacao_estoque, name='movimentacao_estoque_alt'),
+    
+    # === SISTEMA DE ENDEREÇAMENTO MELHORADO ===
+    path('busca-endereco-avancada/', views.busca_endereco_avancada, name='busca_endereco_avancada'),
+    path('qr-endereco/<int:endereco_id>/', views.qr_endereco, name='qr_endereco'),
+    path('gerar-codigos-endereco/', views.gerar_codigos_endereco, name='gerar_codigos_endereco'),
 ]

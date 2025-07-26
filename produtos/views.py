@@ -75,50 +75,56 @@ import json
 @login_required
 def dashboard(request):
     """Dashboard principal com métricas e alertas"""
-    # Estatísticas gerais
-    stats = Produto.estatisticas()
+    from datetime import date, timedelta
     
-    # Alertas ativos
-    alertas_ativos = Alerta.objects.filter(status='ativo').order_by('-data_criacao')[:5]
+    # Estatísticas básicas
+    total_produtos = Produto.objects.count()
+    produtos_em_estoque = Estoque.objects.values('produto').distinct().count()
+    total_enderecos = Armazenamento.objects.count()
+    enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
     
-    # Produtos próximos ao vencimento (próximos 7 dias)
-    proximos_vencimento = []
+    # Taxa de ocupação
+    taxa_ocupacao = round((enderecos_com_estoque / total_enderecos * 100), 1) if total_enderecos > 0 else 0
+    
+    # Produtos por status de validade
+    hoje = date.today()
+    proximos_30_dias = hoje + timedelta(days=30)
+    
+    produtos_vencidos = 0
+    produtos_vencendo = 0
+    produtos_validos = 0
+    
     for produto in Produto.objects.all():
         proxima_validade = produto.proxima_validade()
-        if proxima_validade and proxima_validade <= date.today() + timedelta(days=7):
-            proximos_vencimento.append({
-                'produto': produto,
-                'validade': proxima_validade,
-                'dias': (proxima_validade - date.today()).days
-            })
+        if proxima_validade:
+            if proxima_validade < hoje:
+                produtos_vencidos += 1
+            elif proxima_validade <= proximos_30_dias:
+                produtos_vencendo += 1
+            else:
+                produtos_validos += 1
     
-    # Ocupação por prédio
-    ocupacao_predios = {}
-    for armazenamento in Armazenamento.objects.all():
-        predio = armazenamento.predio
-        if predio not in ocupacao_predios:
-            ocupacao_predios[predio] = {'total': 0, 'ocupados': 0}
-        ocupacao_predios[predio]['total'] += 1
-        if not armazenamento.livre:
-            ocupacao_predios[predio]['ocupados'] += 1
-    
-    # Calcular percentuais
-    for predio in ocupacao_predios:
-        if ocupacao_predios[predio]['total'] > 0:
-            ocupacao_predios[predio]['percentual'] = round(
-                (ocupacao_predios[predio]['ocupados'] / ocupacao_predios[predio]['total']) * 100, 1
-            )
-        else:
-            ocupacao_predios[predio]['percentual'] = 0
+    # Alertas ativos
+    try:
+        alertas_ativos = Alerta.objects.filter(status='ativo').order_by('-data_criacao')[:5]
+    except:
+        alertas_ativos = []
     
     # Últimas movimentações
-    ultimas_movimentacoes = HistoricoMovimentacao.objects.select_related('produto').order_by('-data_operacao')[:10]
+    try:
+        ultimas_movimentacoes = HistoricoMovimentacao.objects.select_related('produto').order_by('-data_operacao')[:10]
+    except:
+        ultimas_movimentacoes = []
     
     context = {
-        'stats': stats,
+        'total_produtos': total_produtos,
+        'produtos_em_estoque': produtos_em_estoque,
+        'total_enderecos': total_enderecos,
+        'taxa_ocupacao': taxa_ocupacao,
+        'produtos_vencidos': produtos_vencidos,
+        'produtos_vencendo': produtos_vencendo,
+        'produtos_validos': produtos_validos,
         'alertas_ativos': alertas_ativos,
-        'proximos_vencimento': proximos_vencimento,
-        'ocupacao_predios': ocupacao_predios,
         'ultimas_movimentacoes': ultimas_movimentacoes,
     }
     
@@ -258,10 +264,13 @@ def relatorio_estoque(request):
 def painel(request):
     """
     Painel principal que exibe o estoque organizando por rua e prédio.
-    ATUALIZADO: Agora inclui todos os prédios, mesmo os vazios, com busca por código.
+    ATUALIZADO: Agora inclui todos os prédios, mesmo os vazios, com busca por código e filtros.
     """
+    # Processar filtros de visualização
+    filtro = request.GET.get('filtro', '')
+    
     # Processar busca por código
-    busca_codigo = request.GET.get('busca_codigo', '')
+    busca_codigo = request.GET.get('codigo', '')
     resultado_busca = None
     
     if busca_codigo:
@@ -271,8 +280,22 @@ def painel(request):
         except Produto.DoesNotExist:
             resultado_busca = 'not_found'
     
-    # Buscar todos os endereços cadastrados (não apenas com estoque)
-    enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel')
+    # Aplicar filtros de visualização
+    if filtro == 'vazios':
+        # Mostrar apenas endereços vazios
+        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
+        enderecos = Armazenamento.objects.exclude(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
+    elif filtro == 'ocupados':
+        # Mostrar apenas endereços ocupados
+        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
+        enderecos = Armazenamento.objects.filter(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
+    else:
+        # Mostrar todos, mas vazios primeiro
+        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
+        enderecos_vazios = Armazenamento.objects.exclude(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')[:20]
+        enderecos_ocupados = Armazenamento.objects.filter(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
+        from itertools import chain
+        enderecos = list(chain(enderecos_vazios, enderecos_ocupados))
     
     # Organizar por ruas e prédios
     organizacao = {}
@@ -352,7 +375,9 @@ def painel(request):
         'total_produtos': total_produtos,
         'taxa_ocupacao': round((enderecos_com_estoque/total_enderecos)*100, 1) if total_enderecos > 0 else 0,
         'busca_codigo': busca_codigo,
-        'resultado_busca': resultado_busca
+        'resultado_busca': resultado_busca,
+        'produto': resultado_busca if resultado_busca != 'not_found' else None,
+        'filtro_ativo': filtro
     }
     
     return render(request, 'produtos/painel.html', context)
@@ -540,44 +565,79 @@ def editar_produto(request, produto_id):
 @login_required
 def listar_produtos(request):
     """Lista todos os produtos com opções de busca e edição"""
-    query = request.GET.get('q', '')
-    categoria_filter = request.GET.get('categoria', '')
-    fornecedor_filter = request.GET.get('fornecedor', '')
+    search = request.GET.get('search', '')
+    codigo = request.GET.get('codigo', '')
+    status = request.GET.get('status', '')
     
     produtos = Produto.objects.all().order_by('nome')
     
     # Filtros de busca
-    if query:
+    if search:
         produtos = produtos.filter(
-            Q(nome__icontains=query) | 
-            Q(codigo__icontains=query) |
-            Q(categoria__icontains=query) |
-            Q(fornecedor__icontains=query)
+            Q(nome__icontains=search) | 
+            Q(categoria__icontains=search) |
+            Q(fornecedor__icontains=search)
         )
     
-    if categoria_filter:
-        produtos = produtos.filter(categoria__icontains=categoria_filter)
+    if codigo:
+        produtos = produtos.filter(codigo__icontains=codigo)
     
-    if fornecedor_filter:
-        produtos = produtos.filter(fornecedor__icontains=fornecedor_filter)
+    # Adicionar informações extras para cada produto
+    produtos_processados = []
+    for produto in produtos:
+        # Contar endereços onde está armazenado
+        total_enderecos = Estoque.objects.filter(produto=produto).count()
+        
+        # Contar lotes
+        total_lotes = produto.lotes.count()
+        
+        # Próxima validade
+        lotes_ordenados = produto.lotes.order_by('validade')
+        proxima_validade = None
+        dias_para_vencer = None
+        
+        if lotes_ordenados.exists():
+            primeiro_lote = lotes_ordenados.first()
+            proxima_validade = primeiro_lote.validade
+            
+            from datetime import date
+            hoje = date.today()
+            dias_para_vencer = (proxima_validade - hoje).days
+        
+        # Adicionar atributos ao produto
+        produto.total_enderecos = total_enderecos
+        produto.total_lotes = total_lotes
+        produto.proxima_validade = proxima_validade
+        produto.dias_para_vencer = dias_para_vencer
+        
+        produtos_processados.append(produto)
     
-    # Paginação
-    paginator = Paginator(produtos, 20)  # 20 produtos por página
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    # Filtrar por status se especificado
+    if status:
+        produtos_filtrados = []
+        for produto in produtos_processados:
+            if status == 'com_endereco' and produto.total_enderecos > 0:
+                produtos_filtrados.append(produto)
+            elif status == 'sem_endereco' and produto.total_enderecos == 0:
+                produtos_filtrados.append(produto)
+            elif status == 'com_lotes' and produto.total_lotes > 0:
+                produtos_filtrados.append(produto)
+            elif status == 'sem_lotes' and produto.total_lotes == 0:
+                produtos_filtrados.append(produto)
+        produtos_processados = produtos_filtrados
     
-    # Opções para filtros
-    categorias = Produto.objects.values_list('categoria', flat=True).distinct().exclude(categoria__isnull=True).exclude(categoria='')
-    fornecedores = Produto.objects.values_list('fornecedor', flat=True).distinct().exclude(fornecedor__isnull=True).exclude(fornecedor='')
+    # Calcular estatísticas
+    total_produtos = len(produtos_processados)
+    produtos_com_estoque = sum(1 for p in produtos_processados if p.total_enderecos > 0)
+    produtos_sem_estoque = total_produtos - produtos_com_estoque
+    produtos_com_lotes = sum(1 for p in produtos_processados if p.total_lotes > 0)
     
     context = {
-        'page_obj': page_obj,
-        'query': query,
-        'categoria_filter': categoria_filter,
-        'fornecedor_filter': fornecedor_filter,
-        'categorias': categorias,
-        'fornecedores': fornecedores,
-        'total_produtos': produtos.count()
+        'produtos': produtos_processados,
+        'produtos_com_estoque': produtos_com_estoque,
+        'produtos_sem_estoque': produtos_sem_estoque,
+        'produtos_com_lotes': produtos_com_lotes,
+        'total_produtos': total_produtos
     }
     
     return render(request, 'produtos/listar_produtos.html', context)
@@ -586,102 +646,181 @@ def listar_produtos(request):
 def excluir_produto(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
     
-    # Verifica se o produto tem estoque
+    # Verificar dados relacionados
     tem_estoque = Estoque.objects.filter(produto=produto).exists()
     tem_lotes = Lote.objects.filter(produto=produto).exists()
+    tem_historico = HistoricoMovimentacao.objects.filter(produto=produto).exists()
     
-    if request.method == 'POST':
-        if tem_estoque or tem_lotes:
-            messages.error(request, f'Não é possível excluir o produto "{produto.nome}" pois ele possui estoque ou lotes registrados.')
-        else:
+    if request.method == 'GET':
+        # Exibir confirmação via modal (já implementado no template)
+        # Redirecionar para exclusão via GET
+        try:
+            # Excluir todos os dados relacionados
+            count_estoque = Estoque.objects.filter(produto=produto).count()
+            count_lotes = Lote.objects.filter(produto=produto).count()
+            count_historico = HistoricoMovimentacao.objects.filter(produto=produto).count()
+            
+            # Deletar em cascata
+            Estoque.objects.filter(produto=produto).delete()
+            Lote.objects.filter(produto=produto).delete()
+            HistoricoMovimentacao.objects.filter(produto=produto).delete()
+            
             nome_produto = produto.nome
+            codigo_produto = produto.codigo
             produto.delete()
-            messages.success(request, f'Produto "{nome_produto}" excluído com sucesso!')
-        return redirect('listar_produtos')
+            
+            # Mensagem detalhada
+            detalhes = []
+            if count_estoque > 0:
+                detalhes.append(f"{count_estoque} registro(s) de estoque")
+            if count_lotes > 0:
+                detalhes.append(f"{count_lotes} lote(s)")
+            if count_historico > 0:
+                detalhes.append(f"{count_historico} registro(s) de histórico")
+            
+            if detalhes:
+                messages.success(request, f'Produto "{nome_produto}" (código: {codigo_produto}) e todos os dados relacionados foram excluídos com sucesso! Removido: {", ".join(detalhes)}.')
+            else:
+                messages.success(request, f'Produto "{nome_produto}" (código: {codigo_produto}) excluído com sucesso!')
+            
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir produto: {str(e)}')
     
-    return render(request, 'produtos/excluir_produto.html', {
-        'produto': produto,
-        'tem_estoque': tem_estoque,
-        'tem_lotes': tem_lotes
-    })
+    return redirect('listar_produtos')
 
 @login_required
 def cadastrar_enderecos(request):
     ultimo_endereco = None
+    
     if request.method == 'POST':
-        if 'excluir_endereco_id' in request.POST:
-            excluir_id = request.POST.get('excluir_endereco_id')
-            Armazenamento.objects.filter(id=excluir_id).delete()
-            messages.success(request, 'Endereço excluído com sucesso!')
-            form = ArmazenamentoForm()  # Garante que o form seja instanciado
-        elif request.POST.getlist('excluir_endereco_ids'):
-            ids = request.POST.getlist('excluir_endereco_ids')
-            Armazenamento.objects.filter(id__in=ids).delete()
-            messages.success(request, f'{len(ids)} endereços excluídos com sucesso!')
-            form = ArmazenamentoForm()
+        modo = request.POST.get('modo', '')
+        
+        # Modo de exclusão individual
+        if modo == 'excluir':
+            endereco_id = request.POST.get('endereco_id')
+            if endereco_id:
+                try:
+                    endereco = Armazenamento.objects.get(id=endereco_id)
+                    endereco.delete()
+                    messages.success(request, f'Endereço {endereco.codigo} excluído com sucesso!')
+                except Armazenamento.DoesNotExist:
+                    messages.error(request, 'Endereço não encontrado!')
+        
+        # Modo de exclusão em lote
+        elif modo == 'bulk_delete':
+            endereco_ids = request.POST.getlist('endereco_ids')
+            if endereco_ids:
+                count = Armazenamento.objects.filter(id__in=endereco_ids).count()
+                Armazenamento.objects.filter(id__in=endereco_ids).delete()
+                messages.success(request, f'{count} endereço(s) excluído(s) com sucesso!')
+        
+        # Modo de alteração de categoria em lote
+        elif modo == 'bulk_category':
+            endereco_ids = request.POST.getlist('endereco_ids')
+            nova_categoria = request.POST.get('nova_categoria')
+            if endereco_ids and nova_categoria:
+                count = Armazenamento.objects.filter(id__in=endereco_ids).update(categoria_armazenamento=nova_categoria)
+                messages.success(request, f'Categoria alterada para {count} endereço(s)!')
+        
+        # Modo de geração em lote
+        elif modo == 'lote':
+            try:
+                rua = int(request.POST.get('rua', 1))
+                predio = int(request.POST.get('predio', 1))
+                niveis = int(request.POST.get('niveis', 3))
+                aps_por_nivel = int(request.POST.get('aps_por_nivel', 10))
+                categoria = request.POST.get('categoria_lote', 'meio')
+                
+                enderecos_criados = []
+                for nivel in range(niveis):
+                    for ap in range(1, aps_por_nivel + 1):
+                        codigo = f"R{rua:02d}P{predio:02d}N{nivel:02d}AP{ap:02d}"
+                        
+                        # Verificar se já existe
+                        if not Armazenamento.objects.filter(codigo=codigo).exists():
+                            endereco = Armazenamento.objects.create(
+                                rua=str(rua),
+                                predio=str(predio),
+                                nivel=nivel,
+                                ap=ap,
+                                categoria_armazenamento=categoria,
+                                codigo=codigo
+                            )
+                            enderecos_criados.append(endereco)
+                
+                messages.success(request, f'{len(enderecos_criados)} endereços criados com sucesso!')
+                
+            except (ValueError, TypeError) as e:
+                messages.error(request, f'Erro nos dados fornecidos: {str(e)}')
+        
+        # Modo individual
+        elif modo == 'individual':
+            try:
+                rua = request.POST.get('rua_individual')
+                predio = request.POST.get('predio_individual')
+                nivel = int(request.POST.get('nivel_individual'))
+                ap = int(request.POST.get('ap_individual'))
+                categoria = request.POST.get('categoria_individual')
+                
+                codigo = f"R{int(rua):02d}P{int(predio):02d}N{nivel:02d}AP{ap:02d}"
+                
+                # Verificar se já existe
+                if Armazenamento.objects.filter(codigo=codigo).exists():
+                    messages.error(request, f'Endereço {codigo} já existe!')
+                else:
+                    endereco = Armazenamento.objects.create(
+                        rua=rua,
+                        predio=predio,
+                        nivel=nivel,
+                        ap=ap,
+                        categoria_armazenamento=categoria,
+                        codigo=codigo
+                    )
+                    messages.success(request, f'Endereço {codigo} cadastrado com sucesso!')
+                    ultimo_endereco = endereco
+                    
+            except (ValueError, TypeError) as e:
+                messages.error(request, f'Erro nos dados fornecidos: {str(e)}')
+        
+        # Fallback para formulário antigo
         else:
             form = ArmazenamentoForm(request.POST)
             if form.is_valid():
                 ultimo_endereco = form.save()
                 messages.success(request, 'Endereço cadastrado com sucesso!')
-                form = ArmazenamentoForm(initial={
-                    'rua': ultimo_endereco.rua,
-                    'predio': ultimo_endereco.predio,
-                    'nivel': ultimo_endereco.nivel,
-                    'ap': ultimo_endereco.ap,
-                })
-    else:
-        form = ArmazenamentoForm()
     
-    # Buscar todos os endereços e agrupar por rua e prédio
-    todos_enderecos = Armazenamento.objects.all()
+    # Buscar todos os endereços e calcular estatísticas
+    todos_enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel', 'ap')
     
-    # Função para ordenação numérica quando possível
-    def ordenacao_inteligente(valor):
-        """Ordena numericamente se possível, senão alfabeticamente"""
-        try:
-            return (0, int(valor))  # Se for número, usa ordenação numérica
-        except ValueError:
-            return (1, valor.lower())  # Se não for número, usa ordenação alfabética
+    # Calcular estatísticas
+    total_enderecos = todos_enderecos.count()
+    enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
+    enderecos_ocupados = enderecos_com_estoque
+    enderecos_vazios = total_enderecos - enderecos_ocupados
+    taxa_ocupacao = round((enderecos_ocupados / total_enderecos) * 100, 1) if total_enderecos > 0 else 0
     
-    # Agrupar endereços por rua e prédio
-    enderecos_agrupados = {}
+    # Adicionar informações extras aos endereços
+    enderecos_processados = []
     for endereco in todos_enderecos:
-        rua = endereco.rua
-        predio = endereco.predio
-        
-        if rua not in enderecos_agrupados:
-            enderecos_agrupados[rua] = {}
-        
-        if predio not in enderecos_agrupados[rua]:
-            enderecos_agrupados[rua][predio] = []
-        
-        enderecos_agrupados[rua][predio].append(endereco)
+        total_produtos = Estoque.objects.filter(local=endereco).count()
+        endereco.total_produtos = total_produtos
+        endereco.tem_produtos = total_produtos > 0
+        enderecos_processados.append(endereco)
     
-    # Ordenar os grupos e endereços
-    enderecos_ordenados = {}
+    # Formulário para casos antigos
+    form = ArmazenamentoForm()
     
-    # Ordena ruas
-    ruas_ordenadas_keys = sorted(enderecos_agrupados.keys(), key=ordenacao_inteligente)
+    context = {
+        'form': form,
+        'ultimo_endereco': ultimo_endereco,
+        'enderecos': enderecos_processados,
+        'total_enderecos': total_enderecos,
+        'enderecos_ocupados': enderecos_ocupados,
+        'enderecos_vazios': enderecos_vazios,
+        'taxa_ocupacao': taxa_ocupacao,
+    }
     
-    for rua in ruas_ordenadas_keys:
-        enderecos_ordenados[rua] = {}
-        
-        # Ordena prédios dentro da rua
-        predios_ordenados_keys = sorted(enderecos_agrupados[rua].keys(), key=ordenacao_inteligente)
-        
-        for predio in predios_ordenados_keys:
-            # Ordena endereços dentro do prédio por nível e AP
-            enderecos_ordenados[rua][predio] = sorted(
-                enderecos_agrupados[rua][predio],
-                key=lambda x: (ordenacao_inteligente(str(x.nivel)), ordenacao_inteligente(str(x.ap)))
-            )
-    
-    return render(request, 'produtos/cadastrar_enderecos.html', {
-        'form': form, 
-        'ultimo_endereco': ultimo_endereco, 
-        'enderecos_agrupados': enderecos_ordenados
-    })
+    return render(request, 'produtos/cadastrar_enderecos.html', context)
 
 @login_required
 def exportar_estoque_csv(request):
@@ -1659,43 +1798,186 @@ def confirmar_armazenamento_endereco(request, endereco_id, produto_id):
         messages.error(request, "Este produto já está armazenado neste endereço!")
         return redirect('painel')
     
+    # Valores padrão vindos do formulário rápido (GET)
+    data_validade_quick = request.GET.get('data_validade_quick')
+    data_armazenado_quick = request.GET.get('data_armazenado_quick')
+    
     if request.method == 'POST':
-        data_validade = request.POST.get('data_validade')
+        # Buscar múltiplas validades e quantidades
+        validades = request.POST.getlist('data_validade')
+        quantidades = request.POST.getlist('quantidade')
         observacoes = request.POST.get('observacoes', '')
         data_armazenado = request.POST.get('data_armazenado')
         
-        # Verificar se a data de validade é obrigatória
-        if not data_validade:
-            messages.error(request, "Data de validade é obrigatória!")
+        # Garantir que temos pelo menos uma validade
+        if not validades or not validades[0]:
+            messages.error(request, 'É necessário informar pelo menos uma data de validade!')
             return render(request, 'produtos/confirmar_armazenamento_endereco.html', {
                 'endereco': endereco,
-                'produto': produto
+                'produto': produto,
+                'data_validade_default': data_validade_quick,
+                'data_armazenado_default': data_armazenado_quick,
+                'next': request.POST.get('next')
             })
         
-        # Criar o lote se não existir
-        lote, created = Lote.objects.get_or_create(
-            produto=produto,
-            validade=data_validade,
-            defaults={
-                'numero_lote': f'LOTE-{produto.codigo}-{data_validade.replace("-", "")}',
-                'quantidade': 1
-            }
-        )
+        # Usar data de armazenamento fornecida ou data atual
+        data_armazenado_final = data_armazenado if data_armazenado else timezone.now().date()
         
-        # Criar o estoque
-        Estoque.objects.create(
-            produto=produto,
-            local=endereco,
-            data_armazenado=data_armazenado or timezone.now().date(),
-            observacoes=observacoes
-        )
+        produtos_armazenados = 0
+        lotes_criados = []
         
-        messages.success(request, f'Produto "{produto.nome}" armazenado com sucesso em {endereco}!')
+        # Processar cada validade
+        for i, validade in enumerate(validades):
+            if not validade:  # Pular validades vazias
+                continue
+                
+            quantidade = int(quantidades[i]) if i < len(quantidades) and quantidades[i] else 1
+            
+            try:
+                # Buscar lote existente ou criar novo
+                lote = Lote.objects.filter(
+                    produto=produto,
+                    validade=validade
+                ).first()
+                
+                if not lote:
+                    # Gerar número de lote único
+                    base_numero = f'LOTE-{produto.codigo}-{validade.replace("-", "")}'
+                    contador = 1
+                    numero_lote = base_numero
+                    
+                    while Lote.objects.filter(numero_lote=numero_lote).exists():
+                        numero_lote = f'{base_numero}-{contador}'
+                        contador += 1
+                    
+                    lote = Lote.objects.create(
+                        produto=produto,
+                        validade=validade,
+                        numero_lote=numero_lote,
+                        quantidade=quantidade
+                    )
+                    lotes_criados.append(lote.numero_lote)
+                else:
+                    # Atualizar quantidade do lote existente
+                    lote.quantidade += quantidade
+                    lote.save()
+                
+                # Criar entradas de estoque para cada unidade
+                for _ in range(quantidade):
+                    Estoque.objects.create(
+                        produto=produto,
+                        local=endereco,
+                        data_armazenado=data_armazenado_final,
+                        data_validade=validade,
+                        observacoes=observacoes or f'Armazenado via modal - Lote: {lote.numero_lote} em {timezone.now().strftime("%d/%m/%Y %H:%M")}',
+                    )
+                    produtos_armazenados += 1
+                    
+            except Exception as e:
+                messages.error(request, f'Erro ao processar validade {validade}: {str(e)}')
+                continue
+        
+        if produtos_armazenados > 0:
+            messages.success(request, f'{produtos_armazenados} unidade(s) do produto "{produto.nome}" armazenada(s) com sucesso em {endereco}!')
+            if lotes_criados:
+                messages.info(request, f'Lotes criados: {", ".join(lotes_criados)}')
+        else:
+            messages.error(request, 'Nenhum produto foi armazenado. Verifique os dados informados.')
+        
+        # Verificar se veio da busca avançada para retornar com filtros
+        next_url = request.POST.get('next') or request.GET.get('next')
+        if next_url and 'busca-endereco-avancada' in next_url:
+            return redirect(next_url)
+        
+        return redirect('painel')
+    
+    # Processar armazenamento rápido via GET (do formulário da busca)
+    elif data_validade_quick:
+        # Buscar múltiplas validades e quantidades
+        validades = request.GET.getlist('data_validade_quick')
+        quantidades = request.GET.getlist('quantidade')
+        
+        # Garantir que temos pelo menos uma validade
+        if not validades or not validades[0]:
+            messages.error(request, 'É necessário informar pelo menos uma data de validade!')
+            return redirect('buscar_produto_endereco', endereco_id=endereco.id)
+        
+        # Usar data de armazenamento fornecida ou data atual
+        data_armazenado_final = data_armazenado_quick or timezone.now().date()
+        
+        produtos_armazenados = 0
+        lotes_criados = []
+        
+        # Processar cada validade
+        for i, validade in enumerate(validades):
+            if not validade:  # Pular validades vazias
+                continue
+                
+            quantidade = int(quantidades[i]) if i < len(quantidades) and quantidades[i] else 1
+            
+            try:
+                # Buscar lote existente ou criar novo
+                lote = Lote.objects.filter(
+                    produto=produto,
+                    validade=validade
+                ).first()
+                
+                if not lote:
+                    # Gerar número de lote único
+                    base_numero = f'LOTE-{produto.codigo}-{validade.replace("-", "")}'
+                    contador = 1
+                    numero_lote = base_numero
+                    
+                    while Lote.objects.filter(numero_lote=numero_lote).exists():
+                        numero_lote = f'{base_numero}-{contador}'
+                        contador += 1
+                    
+                    lote = Lote.objects.create(
+                        produto=produto,
+                        validade=validade,
+                        numero_lote=numero_lote,
+                        quantidade=quantidade
+                    )
+                    lotes_criados.append(lote.numero_lote)
+                else:
+                    # Atualizar quantidade do lote existente
+                    lote.quantidade += quantidade
+                    lote.save()
+                
+                # Criar entradas de estoque para cada unidade
+                for _ in range(quantidade):
+                    Estoque.objects.create(
+                        produto=produto,
+                        local=endereco,
+                        data_armazenado=data_armazenado_final,
+                        data_validade=validade,
+                        observacoes=f'Armazenado via busca rápida - Lote: {lote.numero_lote} em {timezone.now().strftime("%d/%m/%Y %H:%M")}',
+                    )
+                    produtos_armazenados += 1
+                    
+            except Exception as e:
+                messages.error(request, f'Erro ao processar validade {validade}: {str(e)}')
+                continue
+        
+        if produtos_armazenados > 0:
+            messages.success(request, f'{produtos_armazenados} unidade(s) do produto "{produto.nome}" armazenada(s) com sucesso em {endereco}!')
+            if lotes_criados:
+                messages.info(request, f'Lotes criados: {", ".join(lotes_criados)}')
+        else:
+            messages.error(request, 'Nenhum produto foi armazenado. Verifique os dados informados.')
+        
+        # Verificar se veio da busca avançada para retornar com filtros
+        next_url = request.GET.get('next')
+        if next_url and 'busca-endereco-avancada' in next_url:
+            return redirect(next_url)
+        
         return redirect('painel')
     
     context = {
         'endereco': endereco,
-        'produto': produto
+        'produto': produto,
+        'data_validade_default': data_validade_quick,
+        'data_armazenado_default': data_armazenado_quick
     }
     
     return render(request, 'produtos/confirmar_armazenamento_endereco.html', context)
@@ -1713,45 +1995,14 @@ def pagina_principal(request):
     if busca_codigo:
         try:
             produto = Produto.objects.get(codigo=busca_codigo)
-            resultado_busca = produto
-        except Produto.DoesNotExist:
-            resultado_busca = None
-    
-    # Buscar todos os endereços cadastrados (não apenas com estoque)
-    enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel')
-    
-    # Organizar por ruas e prédios
-    organizacao = {}
-    
-    for endereco in enderecos:
-        rua = endereco.rua
-        predio = endereco.predio
-        
-        if rua not in organizacao:
-            organizacao[rua] = {}
-        if predio not in organizacao[rua]:
-            organizacao[rua][predio] = []
-        
-        # Buscar produtos neste endereço
-        estoques = Estoque.objects.filter(local=endereco).select_related('produto')
-        produtos_com_lotes = []
-        
-        for estoque in estoques:
-            produto = estoque.produto
+            
+            # Adicionar informações de validade
             lotes = produto.lotes.all().order_by('validade')
-            
-            # Calcular próxima validade e status
-            proxima_validade = None
-            status_validade = "Sem lote"
-            dias_para_vencer = None
-            
             if lotes.exists():
                 primeiro_lote = lotes.first()
-                proxima_validade = primeiro_lote.validade
-                
                 from datetime import date
                 hoje = date.today()
-                dias_para_vencer = (proxima_validade - hoje).days
+                dias_para_vencer = (primeiro_lote.validade - hoje).days
                 
                 if dias_para_vencer < 0:
                     status_validade = "Vencido"
@@ -1761,38 +2012,141 @@ def pagina_principal(request):
                     status_validade = "Próximo ao vencimento"
                 else:
                     status_validade = "Válido"
+                
+                produto.status_validade = status_validade
+                produto.dias_para_vencer = dias_para_vencer
+                produto.proxima_validade = primeiro_lote.validade
             
-            produto_info = {
-                'estoque': estoque,
-                'produto': produto,
-                'lotes': lotes,
-                'proxima_validade': proxima_validade,
-                'status_validade': status_validade,
-                'dias_para_vencer': dias_para_vencer,
-                'total_lotes': lotes.count()
+            resultado_busca = produto
+        except Produto.DoesNotExist:
+            resultado_busca = None
+    
+    # Buscar todos os endereços cadastrados (não apenas com estoque) ordenados
+    enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel', 'ap')
+    
+    # Organizar por ruas e prédios (em ordem crescente)
+    organizacao = {}
+    
+    for endereco in enderecos:
+        rua = int(endereco.rua) if endereco.rua.isdigit() else endereco.rua
+        predio = int(endereco.predio) if endereco.predio.isdigit() else endereco.predio
+        
+        if rua not in organizacao:
+            organizacao[rua] = {}
+        if predio not in organizacao[rua]:
+            organizacao[rua][predio] = {'enderecos_com_produtos': [], 'enderecos_vazios': []}
+        
+        # Buscar produtos neste endereço
+        estoques = Estoque.objects.filter(local=endereco).select_related('produto')
+        produtos_com_lotes = []
+        
+        if estoques.exists():
+            # Endereço com produtos
+            for estoque in estoques:
+                produto = estoque.produto
+                lotes = produto.lotes.all().order_by('validade')
+                
+                # Calcular próxima validade e status
+                proxima_validade = None
+                status_validade = "Sem lote"
+                dias_para_vencer = None
+                
+                if lotes.exists():
+                    primeiro_lote = lotes.first()
+                    proxima_validade = primeiro_lote.validade
+                    
+                    from datetime import date
+                    hoje = date.today()
+                    dias_para_vencer = (proxima_validade - hoje).days
+                    
+                    if dias_para_vencer < 0:
+                        status_validade = "Vencido"
+                    elif dias_para_vencer <= 7:
+                        status_validade = "Vence em breve"
+                    elif dias_para_vencer <= 30:
+                        status_validade = "Próximo ao vencimento"
+                    else:
+                        status_validade = "Válido"
+                
+                produto_info = {
+                    'estoque': estoque,
+                    'produto': produto,
+                    'lotes': lotes,
+                    'proxima_validade': proxima_validade,
+                    'status_validade': status_validade,
+                    'dias_para_vencer': dias_para_vencer,
+                    'total_lotes': lotes.count()
+                }
+                produtos_com_lotes.append(produto_info)
+            
+            # Adicionar informações do endereço com produtos
+            endereco_info = {
+                'endereco': endereco,
+                'produtos': produtos_com_lotes,
+                'tem_produtos': True,
+                'total_produtos': len(produtos_com_lotes)
             }
-            produtos_com_lotes.append(produto_info)
+            
+            organizacao[rua][predio]['enderecos_com_produtos'].append(endereco_info)
+        else:
+            # Endereço vazio
+            organizacao[rua][predio]['enderecos_vazios'].append(endereco)
+    
+    # Ordenar as ruas e prédios numericamente
+    def ordenacao_inteligente(valor):
+        """Ordena numericamente se possível, senão alfabeticamente"""
+        try:
+            return (0, int(valor))  # Se for número, usa ordenação numérica
+        except ValueError:
+            return (1, str(valor).lower())  # Se não for número, usa ordenação alfabética
+    
+    # Criar organizacao ordenada
+    organizacao_ordenada = {}
+    ruas_ordenadas = sorted(organizacao.keys(), key=ordenacao_inteligente)
+    
+    for rua in ruas_ordenadas:
+        organizacao_ordenada[rua] = {}
+        predios_ordenados = sorted(organizacao[rua].keys(), key=ordenacao_inteligente)
         
-        # Adicionar informações do endereço
-        endereco_info = {
-            'endereco': endereco,
-            'produtos': produtos_com_lotes,
-            'tem_produtos': len(produtos_com_lotes) > 0,
-            'total_produtos': len(produtos_com_lotes)
-        }
-        
-        organizacao[rua][predio].append(endereco_info)
+        for predio in predios_ordenados:
+            # Calcular total de produtos no prédio
+            total_produtos_predio = sum(endereco_info['total_produtos'] 
+                                      for endereco_info in organizacao[rua][predio]['enderecos_com_produtos'])
+            
+            # Calcular total de endereços vazios no prédio
+            total_vazios_predio = len(organizacao[rua][predio]['enderecos_vazios'])
+            
+            organizacao_ordenada[rua][predio] = {
+                'enderecos': organizacao[rua][predio]['enderecos_com_produtos'],
+                'enderecos_vazios': organizacao[rua][predio]['enderecos_vazios'],
+                'total_produtos': total_produtos_predio,
+                'total_vazios': total_vazios_predio
+            }
     
     # Calcular estatísticas
     total_enderecos = Armazenamento.objects.count()
     enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
     total_produtos = Estoque.objects.count()
     
+    # Buscar endereços sem estoque
+    enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True).distinct()
+    enderecos_sem_estoque = Armazenamento.objects.exclude(
+        id__in=enderecos_com_estoque_ids
+    ).order_by('rua', 'predio', 'nivel', 'ap')
+
+    # Buscar produtos sem endereço (sem estoque)
+    produtos_com_estoque_ids = Estoque.objects.values_list('produto_id', flat=True).distinct()
+    produtos_sem_endereco = Produto.objects.exclude(
+        id__in=produtos_com_estoque_ids
+    ).order_by('nome')
+
     context = {
-        'organizacao': organizacao,
+        'organizacao': organizacao_ordenada,
         'total_enderecos': total_enderecos,
         'enderecos_com_estoque': enderecos_com_estoque,
         'enderecos_vazios': total_enderecos - enderecos_com_estoque,
+        'enderecos_sem_estoque': enderecos_sem_estoque,
+        'produtos_sem_endereco': produtos_sem_endereco,
         'total_produtos': total_produtos,
         'taxa_ocupacao': round((enderecos_com_estoque/total_enderecos)*100, 1) if total_enderecos > 0 else 0,
         'busca_codigo': busca_codigo,
@@ -1806,18 +2160,47 @@ def detalhes_produto(request, produto_id):
     """
     Exibe todos os detalhes de um produto específico, incluindo:
     - Informações básicas do produto
-    - Localização de armazenamento
-    - Todos os lotes com validades
+    - Localização de armazenamento com botões de ação
+    - Todos os lotes com validades organizados por FIFO
     - Histórico de movimentações
-    - Botões de ação (editar, excluir)
+    - Botões de ação otimizados
     """
     produto = get_object_or_404(Produto, id=produto_id)
     
-    # Buscar estoque atual
-    estoques = Estoque.objects.filter(produto=produto).select_related('local')
+    # Buscar estoque atual organizados por níveis (FIFO: 2 -> 0)
+    estoques = Estoque.objects.filter(produto=produto).select_related('local').order_by('local__nivel', 'data_armazenado')
     
-    # Buscar todos os lotes
-    lotes = produto.lotes.all().order_by('validade')
+    # Separar estoques por nível para lógica FIFO
+    estoques_nivel_2 = estoques.filter(local__nivel='2').order_by('data_armazenado')  # Mais antigo primeiro
+    estoques_nivel_0 = estoques.filter(local__nivel='0').order_by('data_armazenado')  # Mais antigo primeiro
+    
+    # Organizar estoques com informações extras
+    estoques_processados = []
+    
+    # Processar nível 2 primeiro (FIFO)
+    for estoque in estoques_nivel_2:
+        estoque_info = {
+            'estoque': estoque,
+            'nivel': '2',
+            'tipo': 'Armazenamento',
+            'pode_abastecer': True,  # Pode abastecer para nível 0
+            'nivel_destino': '0'
+        }
+        estoques_processados.append(estoque_info)
+    
+    # Processar nível 0 depois
+    for estoque in estoques_nivel_0:
+        estoque_info = {
+            'estoque': estoque,
+            'nivel': '0',
+            'tipo': 'Expedição',
+            'pode_abastecer': False,  # Já está no nível de saída
+            'nivel_destino': None
+        }
+        estoques_processados.append(estoque_info)
+    
+    # Buscar todos os lotes ordenados por FIFO (mais antigo primeiro)
+    lotes = produto.lotes.all().order_by('validade', 'created_at')
     
     # Calcular status das validades
     from datetime import date
@@ -1825,27 +2208,73 @@ def detalhes_produto(request, produto_id):
     
     lotes_com_status = []
     for lote in lotes:
-        dias_para_vencer = (lote.validade - hoje).days
-        
-        if dias_para_vencer < 0:
-            status = "Vencido"
-            status_class = "status-vencido"
-        elif dias_para_vencer <= 7:
-            status = "Vence em breve"
-            status_class = "status-vence-breve"
-        elif dias_para_vencer <= 30:
-            status = "Próximo ao vencimento"
-            status_class = "status-proximo"
+        if lote.validade:
+            dias_para_vencer = (lote.validade - hoje).days
+            
+            if dias_para_vencer < 0:
+                status = "Vencido"
+                status_class = "status-vencido"
+                prioridade = 1  # Maior prioridade
+            elif dias_para_vencer <= 7:
+                status = "Vence em breve"
+                status_class = "status-vence-breve"
+                prioridade = 2
+            elif dias_para_vencer <= 30:
+                status = "Próximo ao vencimento"
+                status_class = "status-proximo"
+                prioridade = 3
+            else:
+                status = "Válido"
+                status_class = "status-valido"
+                prioridade = 4  # Menor prioridade
         else:
-            status = "Válido"
-            status_class = "status-valido"
+            status = "Sem validade"
+            status_class = "status-sem-validade"
+            dias_para_vencer = None
+            prioridade = 5
+        
+        # Verificar se este lote tem produtos no estoque de nível 2
+        tem_no_nivel_2 = estoques_nivel_2.exists()
+        pode_abastecer = tem_no_nivel_2 and estoques_nivel_0.count() == 0  # Só pode abastecer se não tem no nível 0
+        
+        # Buscar endereços onde este lote está armazenado
+        # Vamos buscar por produto e data de validade, ou todos os estoques se não tiver validade específica
+        if lote.validade:
+            estoques_do_lote = estoques.filter(data_validade=lote.validade)
+        else:
+            # Se o lote não tem validade, buscar estoques sem validade
+            estoques_do_lote = estoques.filter(data_validade__isnull=True)
+        
+        enderecos_do_lote = []
+        for estoque in estoques_do_lote:
+            enderecos_do_lote.append({
+                'estoque': estoque,
+                'endereco': estoque.local,
+                'quantidade': 1  # Assumindo 1 por padrão, ajustar se necessário
+            })
+        
+        # Se não encontrou endereços específicos, vamos pegar todos os estoques do produto
+        if not enderecos_do_lote:
+            for estoque in estoques[:3]:  # Limitar a 3 para não sobrecarregar
+                enderecos_do_lote.append({
+                    'estoque': estoque,
+                    'endereco': estoque.local,
+                    'quantidade': 1
+                })
         
         lotes_com_status.append({
             'lote': lote,
             'status': status,
             'status_class': status_class,
-            'dias_para_vencer': dias_para_vencer
+            'dias_para_vencer': dias_para_vencer,
+            'prioridade': prioridade,
+            'pode_abastecer': pode_abastecer,
+            'tem_no_nivel_2': tem_no_nivel_2,
+            'enderecos': enderecos_do_lote
         })
+    
+    # Ordenar lotes por prioridade FIFO (vencido/próximo ao vencimento primeiro)
+    lotes_com_status.sort(key=lambda x: (x['prioridade'], x['lote'].validade if x['lote'].validade else date.max))
     
     # Buscar histórico (se existir)
     try:
@@ -1854,13 +2283,458 @@ def detalhes_produto(request, produto_id):
     except:
         historico = []
     
+    # Endereços disponíveis para abastecimento (nível 0)
+    enderecos_nivel_0 = Armazenamento.objects.filter(nivel='0').order_by('rua', 'predio', 'ap')
+    
     context = {
         'produto': produto,
-        'estoques': estoques,
+        'estoques_processados': estoques_processados,
         'lotes_com_status': lotes_com_status,
         'total_lotes': lotes.count(),
         'historico': historico,
-        'tem_estoque': estoques.exists()
+        'tem_estoque': estoques.exists(),
+        'tem_nivel_2': estoques_nivel_2.exists(),
+        'tem_nivel_0': estoques_nivel_0.exists(),
+        'enderecos_nivel_0': enderecos_nivel_0,
+        'total_enderecos': estoques.count()
     }
     
     return render(request, 'produtos/detalhes_produto.html', context)
+
+# === SISTEMA DE ENDEREÇAMENTO MELHORADO ===
+
+@login_required
+def busca_endereco_avancada(request):
+    """Busca avançada de endereços com filtros múltiplos"""
+    try:
+        enderecos = Armazenamento.objects.prefetch_related('estoque_set__produto').all()
+        
+        # Aplicar filtros
+        codigo = request.GET.get('codigo', '').strip()
+        codigo_produto = request.GET.get('codigo_produto', '').strip()
+        rua = request.GET.get('rua', '').strip()
+        predio = request.GET.get('predio', '').strip()
+        nivel = request.GET.get('nivel', '').strip()
+        ap = request.GET.get('ap', '').strip()
+        status = request.GET.get('status', '').strip()
+        tipo = request.GET.get('tipo', '').strip()
+        sort = request.GET.get('sort', 'codigo')
+        
+        if codigo:
+            enderecos = enderecos.filter(codigo__icontains=codigo)
+        if codigo_produto:
+            enderecos = enderecos.filter(estoque__produto__codigo__icontains=codigo_produto).distinct()
+        if rua:
+            enderecos = enderecos.filter(rua__icontains=rua)
+        if predio:
+            enderecos = enderecos.filter(predio__icontains=predio)
+        if nivel:
+            try:
+                nivel_int = int(nivel)
+                enderecos = enderecos.filter(nivel=nivel_int)
+            except ValueError:
+                enderecos = enderecos.filter(nivel__icontains=nivel)
+        if ap:
+            enderecos = enderecos.filter(ap__icontains=ap)
+        if tipo:
+            enderecos = enderecos.filter(categoria_armazenamento=tipo)
+        
+        # Converter QuerySet para lista antes dos filtros de status
+        enderecos_lista = list(enderecos)
+        
+        # Filtro por status (vazio/ocupado)
+        if status == 'vazio':
+            enderecos_lista = [e for e in enderecos_lista if getattr(e, 'ocupacao_atual', lambda: 0)() == 0]
+        elif status == 'ocupado':
+            enderecos_lista = [e for e in enderecos_lista if getattr(e, 'ocupacao_atual', lambda: 0)() > 0]
+        
+        # Ordenação
+        try:
+            if sort == 'codigo':
+                enderecos_lista.sort(key=lambda x: x.codigo or 'ZZZZ')
+            elif sort == 'rua':
+                enderecos_lista.sort(key=lambda x: (
+                    int(x.rua) if x.rua and x.rua.isdigit() else (x.rua or 'ZZZ'), 
+                    int(x.predio) if x.predio and x.predio.isdigit() else (x.predio or 'ZZZ')
+                ))
+            elif sort == 'ocupacao':
+                enderecos_lista.sort(key=lambda x: getattr(x, 'ocupacao_atual', lambda: 0)(), reverse=True)
+        except Exception as e:
+            # Se houver erro na ordenação, mantém ordem original
+            print(f"Erro na ordenação: {e}")
+        
+        return render(request, 'produtos/busca_endereco_avancada.html', {
+            'enderecos': enderecos_lista,
+            'total_enderecos': len(enderecos_lista),
+            'filtros_aplicados': {
+                'codigo': codigo,
+                'codigo_produto': codigo_produto,
+                'rua': rua,
+                'predio': predio,
+                'nivel': nivel,
+                'ap': ap,
+                'status': status,
+                'tipo': tipo,
+                'sort': sort,
+            }
+        })
+    except Exception as e:
+        # Em caso de erro, retorna página com mensagem de erro
+        from django.contrib import messages
+        messages.error(request, f'Erro na busca avançada: {str(e)}')
+        return render(request, 'produtos/busca_endereco_avancada.html', {
+            'enderecos': [],
+            'total_enderecos': 0,
+            'erro': str(e)
+        })
+
+@login_required
+def qr_endereco(request, endereco_id):
+    """Gera QR Code para um endereço específico"""
+    endereco = get_object_or_404(Armazenamento, id=endereco_id)
+    return render(request, 'produtos/qr_endereco.html', {
+        'endereco': endereco,
+    })
+
+@login_required
+def gerar_codigos_endereco(request):
+    """Gera códigos únicos para todos os endereços"""
+    if request.method == 'POST':
+        from django.db import models
+        enderecos_sem_codigo = Armazenamento.objects.filter(
+            models.Q(codigo__isnull=True) | models.Q(codigo='')
+        )
+        
+        atualizados = 0
+        for endereco in enderecos_sem_codigo:
+            codigo_novo = f"{str(endereco.rua).zfill(2)}-{str(endereco.predio).zfill(2)}-{str(endereco.nivel).zfill(2)}-{str(endereco.ap).zfill(2)}"
+            endereco.codigo = codigo_novo
+            endereco.save()
+            atualizados += 1
+        
+        messages.success(request, f'{atualizados} endereços atualizados com códigos únicos!')
+        return redirect('cadastrar_enderecos')
+    
+    from django.db import models
+    enderecos_sem_codigo = Armazenamento.objects.filter(
+        models.Q(codigo__isnull=True) | models.Q(codigo='')
+    ).count()
+    
+    return render(request, 'produtos/gerar_codigos.html', {
+        'enderecos_sem_codigo': enderecos_sem_codigo,
+    })
+
+from django.http import JsonResponse
+
+def buscar_produto_api(request):
+    """
+    API para busca de produtos via AJAX - retorna dados em JSON
+    """
+    codigo = request.GET.get('codigo', '').strip()
+    
+    if not codigo:
+        return JsonResponse({'success': False, 'message': 'Código não fornecido'})
+    
+    try:
+        produto = Produto.objects.get(codigo=codigo)
+        
+        # Obter informações de validade
+        lotes = produto.lotes.all().order_by('validade')
+        proxima_validade = None
+        status_validade = "Sem lote"
+        dias_para_vencer = None
+        
+        if lotes.exists():
+            primeiro_lote = lotes.first()
+            proxima_validade = primeiro_lote.validade
+            
+            from datetime import date
+            hoje = date.today()
+            dias_para_vencer = (proxima_validade - hoje).days
+            
+            if dias_para_vencer < 0:
+                status_validade = "Vencido"
+            elif dias_para_vencer <= 7:
+                status_validade = "Vence em breve"
+            elif dias_para_vencer <= 30:
+                status_validade = "Próximo ao vencimento"
+            else:
+                status_validade = "Válido"
+        
+        # Obter endereços e quantidades
+        estoques = Estoque.objects.filter(produto=produto).select_related('local')
+        enderecos_dict = {}
+        quantidade_total = 0
+        
+        # Agrupar por local e contar quantidade
+        for estoque in estoques:
+            local_codigo = estoque.local.codigo or f"R{estoque.local.rua}P{estoque.local.predio}N{estoque.local.nivel}AP{estoque.local.ap}"
+            
+            if local_codigo not in enderecos_dict:
+                enderecos_dict[local_codigo] = {
+                    'codigo': local_codigo,
+                    'tipo': estoque.local.categoria_armazenamento,
+                    'quantidade': 0,
+                    'rua': estoque.local.rua,
+                    'predio': estoque.local.predio,
+                    'nivel': estoque.local.nivel,
+                    'ap': estoque.local.ap
+                }
+            
+            enderecos_dict[local_codigo]['quantidade'] += 1
+            quantidade_total += 1
+        
+        enderecos = list(enderecos_dict.values())
+        
+        return JsonResponse({
+            'success': True,
+            'produto': {
+                'id': produto.id,
+                'nome': produto.nome,
+                'codigo': produto.codigo,
+                'categoria': produto.categoria,
+                'proxima_validade': proxima_validade.strftime('%d/%m/%Y') if proxima_validade else None,
+                'status_validade': status_validade,
+                'dias_para_vencer': dias_para_vencer,
+                'quantidade_total': quantidade_total,
+                'enderecos': enderecos
+            }
+        })
+        
+    except Produto.DoesNotExist:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Produto com código "{codigo}" não encontrado'
+        })
+
+def movimentacao_estoque(request):
+    """
+    Página de movimentação e abastecimento de estoque
+    """
+    if request.method == 'POST':
+        acao = request.POST.get('acao')
+        codigo = request.POST.get('codigo', '').strip()
+        
+        if acao == 'buscar_produto':
+            try:
+                produto = Produto.objects.get(codigo=codigo)
+                
+                # Buscar todos os estoques deste produto
+                estoques = Estoque.objects.filter(produto=produto).select_related('local')
+                
+                # Verificar se o produto não tem estoque
+                if not estoques.exists():
+                    context = {
+                        'produto_encontrado': produto,
+                        'produto_sem_estoque': True,
+                        'enderecos_info': [],
+                        'total_unidades': 0,
+                        'codigo_busca': codigo
+                    }
+                else:
+                    # Organizar por endereços
+                    enderecos_info = []
+                    
+                    # Buscar validades
+                    estoque_nivel_0 = estoques.filter(local__nivel='0').first()
+                    estoque_nivel_2 = estoques.filter(local__nivel='2').first()
+                    
+                    validade_atual = estoque_nivel_0.data_validade if estoque_nivel_0 else None
+                    proxima_validade = estoque_nivel_2.data_validade if estoque_nivel_2 else None
+                    
+                    for estoque in estoques:
+                        enderecos_info.append({
+                            'id': estoque.id,
+                            'endereco_codigo': estoque.local.codigo or f"R{estoque.local.rua}P{estoque.local.predio}N{estoque.local.nivel}AP{estoque.local.ap}",
+                            'rua': estoque.local.rua,
+                            'predio': estoque.local.predio,
+                            'nivel': estoque.local.nivel,
+                            'ap': estoque.local.ap,
+                            'categoria': estoque.local.categoria_armazenamento,
+                            'data_armazenado': estoque.data_armazenado,
+                            'data_validade': estoque.data_validade,
+                            'data_alteracao': estoque.data_alteracao,
+                        })
+                    
+                    # Contar total de unidades
+                    total_unidades = len(estoques)
+                    
+                    context = {
+                        'produto_encontrado': produto,
+                        'enderecos_info': enderecos_info,
+                        'total_unidades': total_unidades,
+                        'codigo_busca': codigo,
+                        'validade_atual': validade_atual,
+                        'proxima_validade': proxima_validade
+                    }
+                
+            except Produto.DoesNotExist:
+                messages.error(request, f'Produto com código "{codigo}" não encontrado.')
+                context = {}
+            except Exception as e:
+                messages.error(request, f'Erro ao buscar produto: {str(e)}')
+                context = {}
+                
+        elif acao == 'alocar_produto':
+            produto_id = request.POST.get('produto_id')
+            endereco_destino_id = request.POST.get('endereco_destino_id')
+            data_validade = request.POST.get('data_validade')
+            
+            try:
+                produto = Produto.objects.get(id=produto_id)
+                endereco_destino = Armazenamento.objects.get(id=endereco_destino_id)
+                
+                # Criar novo estoque
+                novo_estoque = Estoque.objects.create(
+                    produto=produto,
+                    local=endereco_destino,
+                    data_armazenado=timezone.now().date(),
+                    data_validade=data_validade if data_validade else None,
+                    data_alteracao=timezone.now(),
+                    usuario_responsavel=request.user.username if hasattr(request.user, 'username') else 'Sistema'
+                )
+                
+                # Registrar movimentação
+                HistoricoMovimentacao.objects.create(
+                    produto=produto,
+                    local_origem=None,
+                    local_destino=endereco_destino,
+                    tipo_operacao='entrada',
+                    quantidade=1,
+                    usuario=request.user.username if hasattr(request.user, 'username') else 'Sistema',
+                    observacoes=f'Alocação inicial do produto - Validade: {data_validade if data_validade else "Não informada"}'
+                )
+                
+                messages.success(request, f'Produto alocado em {endereco_destino.codigo or endereco_destino} com sucesso!')
+                context = {}
+                
+            except (Produto.DoesNotExist, Armazenamento.DoesNotExist):
+                messages.error(request, 'Erro ao alocar produto.')
+                context = {}
+                
+        elif acao == 'abastecer':
+            estoque_origem_id = request.POST.get('estoque_origem_id')
+            endereco_destino_id = request.POST.get('endereco_destino_id')
+            
+            try:
+                estoque_origem = Estoque.objects.get(id=estoque_origem_id)
+                endereco_destino = Armazenamento.objects.get(id=endereco_destino_id)
+                produto = estoque_origem.produto
+                
+                # Verificar se o endereço de destino está no nível 0 (área de saída)
+                if endereco_destino.nivel != '0':
+                    messages.error(request, 'Abastecimento só pode ser feito para endereços no nível 0 (área de saída).')
+                    return redirect('movimentacao_estoque')
+                
+                # Verificar se já existe produto no nível 0 (destino)
+                estoque_destino_existente = Estoque.objects.filter(
+                    produto=produto,
+                    local=endereco_destino
+                ).first()
+                
+                if estoque_destino_existente:
+                    # Produto já existe no nível 0 - atualizar com data mais antiga (FIFO)
+                    if estoque_origem.data_armazenado < estoque_destino_existente.data_armazenado or (estoque_origem.data_validade and estoque_destino_existente.data_validade and estoque_origem.data_validade < estoque_destino_existente.data_validade):
+                        # Produto do nível 2 é mais antigo ou tem validade mais próxima, atualizar o nível 0
+                        data_anterior = estoque_destino_existente.data_armazenado
+                        validade_anterior = estoque_destino_existente.data_validade
+                        
+                        estoque_destino_existente.data_armazenado = estoque_origem.data_armazenado
+                        estoque_destino_existente.data_validade = estoque_origem.data_validade
+                        estoque_destino_existente.data_alteracao = timezone.now()
+                        estoque_destino_existente.save()
+                        
+                        # Remover produto do nível 2
+                        local_origem = estoque_origem.local
+                        estoque_origem.delete()
+                        
+                        # Registrar movimentação
+                        HistoricoMovimentacao.objects.create(
+                            produto=produto,
+                            local_origem=local_origem,
+                            local_destino=endereco_destino,
+                            tipo_operacao='atualizacao_fifo',
+                            quantidade=1,
+                            usuario=request.user.username if hasattr(request.user, 'username') else 'Sistema',
+                            observacoes=f'Atualização FIFO - data alterada de {data_anterior.strftime("%d/%m/%Y")} para {estoque_origem.data_armazenado.strftime("%d/%m/%Y")}' + (f', validade de {validade_anterior.strftime("%d/%m/%Y") if validade_anterior else "sem validade"} para {estoque_origem.data_validade.strftime("%d/%m/%Y") if estoque_origem.data_validade else "sem validade"}' if estoque_origem.data_validade != validade_anterior else '')
+                        )
+                        
+                        messages.success(request, f'Produto no nível 0 atualizado com data mais antiga ({estoque_origem.data_armazenado.strftime("%d/%m/%Y")}) e validade atualizada!')
+                        
+                        # Verificar se o nível 2 ficou vazio
+                        if not Estoque.objects.filter(local=local_origem).exists():
+                            context = {
+                                'pergunta_excluir_nivel2': True,
+                                'endereco_nivel2': local_origem,
+                                'produto_movido': produto
+                            }
+                        else:
+                            context = {}
+                    else:
+                        # Produto no nível 0 já é mais antigo
+                        messages.info(request, f'Produto no nível 0 já possui data/validade mais antiga. Nenhuma alteração necessária.')
+                        context = {}
+                else:
+                    # Não existe produto no nível 0, mover do nível 2 para nível 0
+                    local_origem = estoque_origem.local
+                    estoque_origem.local = endereco_destino
+                    estoque_origem.data_alteracao = timezone.now()
+                    estoque_origem.save()
+                    
+                    # Registrar movimentação
+                    HistoricoMovimentacao.objects.create(
+                        produto=produto,
+                        local_origem=local_origem,
+                        local_destino=endereco_destino,
+                        tipo_operacao='transferencia',
+                        quantidade=1,
+                        usuario=request.user.username if hasattr(request.user, 'username') else 'Sistema',
+                        observacoes=f'Movimentação do nível 2 para nível 0 (área de saída) - Validade: {estoque_origem.data_validade.strftime("%d/%m/%Y") if estoque_origem.data_validade else "Não informada"}'
+                    )
+                    
+                    messages.success(request, f'Produto movido para {endereco_destino.codigo or endereco_destino} com sucesso!')
+                    
+                    # Verificar se o nível 2 ficou vazio
+                    if not Estoque.objects.filter(local=local_origem).exists():
+                        context = {
+                            'pergunta_excluir_nivel2': True,
+                            'endereco_nivel2': local_origem,
+                            'produto_movido': produto
+                        }
+                    else:
+                        context = {}
+                
+            except (Estoque.DoesNotExist, Armazenamento.DoesNotExist):
+                messages.error(request, 'Erro ao processar abastecimento.')
+                context = {}
+                
+        elif acao == 'excluir_nivel2':
+            endereco_id = request.POST.get('endereco_id')
+            try:
+                endereco = Armazenamento.objects.get(id=endereco_id)
+                endereco.delete()
+                messages.success(request, f'Endereço {endereco} excluído com sucesso.')
+            except Armazenamento.DoesNotExist:
+                messages.error(request, 'Endereço não encontrado.')
+            context = {}
+            
+        elif acao == 'manter_nivel2':
+            messages.info(request, 'Endereço mantido no nível 2.')
+            context = {}
+                
+        else:
+            context = {}
+    else:
+        context = {}
+    
+    # Buscar endereços disponíveis para abastecimento (nível 0)
+    enderecos_destino = Armazenamento.objects.filter(nivel='0').order_by('rua', 'predio', 'ap')
+    
+    context.update({
+        'enderecos_destino': enderecos_destino,
+        'historico_recente': HistoricoMovimentacao.objects.filter(
+            tipo_operacao='transferencia'
+        ).order_by('-data_operacao')[:10]
+    })
+    
+    return render(request, 'produtos/movimentacao_estoque.html', context)

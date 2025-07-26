@@ -1,53 +1,290 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard - Controle de Estoque</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
-        }
+{% extends 'produtos/base.html' %}
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+{% block title %}Dashboard - Sistema de Gestão de Estoque{% endblock %}
 
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
+{% block breadcrumb %}
+    <li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
 
-        .header h1 {
-            color: #333;
-            margin: 0 0 10px 0;
-        }
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-tachometer-alt text-primary"></i>
+        Dashboard
+    </h1>
+    <p class="page-subtitle">Painel principal do sistema de gestão de estoque</p>
+</div>
 
-        .nav-links {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-1 fw-bold">{{ total_produtos|default:0 }}</h3>
+                        <p class="text-muted mb-0">Total de Produtos</p>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up"></i>
+                            {{ produtos_em_estoque|default:0 }} em estoque
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-success bg-opacity-10 text-success rounded-circle p-3">
+                            <i class="fas fa-map-marker-alt fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-1 fw-bold">{{ total_enderecos|default:0 }}</h3>
+                        <p class="text-muted mb-0">Endereços Cadastrados</p>
+                        <small class="text-info">
+                            <i class="fas fa-percentage"></i>
+                            {{ taxa_ocupacao|default:0 }}% ocupação
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning bg-opacity-10 text-warning rounded-circle p-3">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-1 fw-bold">{{ produtos_vencendo|default:0 }}</h3>
+                        <p class="text-muted mb-0">Próximos Vencimento</p>
+                        <small class="text-warning">
+                            <i class="fas fa-clock"></i>
+                            Próximos 30 dias
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3">
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3 class="mb-1 fw-bold">{{ produtos_vencidos|default:0 }}</h3>
+                        <p class="text-muted mb-0">Produtos Vencidos</p>
+                        <small class="text-danger">
+                            <i class="fas fa-exclamation"></i>
+                            Atenção necessária
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        .nav-links a {
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
+<!-- Quick Actions -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt text-primary"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <div class="row g-3">
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'cadastrar_produto' %}" class="btn btn-primary-modern w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                            <span>Novo Produto</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'cadastrar_enderecos' %}" class="btn btn-success-modern w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                            <span>Novo Endereço</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'busca_endereco_avancada' %}" class="btn btn-info text-white w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-search fa-2x mb-2"></i>
+                            <span>Buscar</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'importar_produtos_csv' %}" class="btn btn-warning-modern w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-file-import fa-2x mb-2"></i>
+                            <span>Importar CSV</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'movimentacao_estoque' %}" class="btn btn-info text-white w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                            <span>Movimentação</span>
+                        </a>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <a href="{% url 'relatorio_completo' %}" class="btn btn-outline-modern w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        .nav-links a:hover {
+<!-- Navigation Cards -->
+<div class="row g-4">
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-th-large fa-4x text-primary"></i>
+                </div>
+                <h5 class="card-title">Visão Geral do Estoque</h5>
+                <p class="card-text text-muted">
+                    Visualize todos os produtos organizados por endereços, com informações detalhadas de validade e localização.
+                </p>
+                <a href="{% url 'pagina_principal' %}" class="btn btn-primary-modern">
+                    <i class="fas fa-eye"></i> Acessar Visão Geral
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-boxes fa-4x text-success"></i>
+                </div>
+                <h5 class="card-title">Painel de Controle</h5>
+                <p class="card-text text-muted">
+                    Gerencie produtos, edite informações de estoque e controle validades com ferramentas avançadas.
+                </p>
+                <a href="{% url 'painel' %}" class="btn btn-success-modern">
+                    <i class="fas fa-cogs"></i> Abrir Painel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-search fa-4x text-info"></i>
+                </div>
+                <h5 class="card-title">Busca Avançada</h5>
+                <p class="card-text text-muted">
+                    Localize produtos rapidamente usando filtros avançados por código, nome, validade ou localização.
+                </p>
+                <a href="{% url 'busca_endereco_avancada' %}" class="btn btn-info text-white">
+                    <i class="fas fa-search"></i> Buscar Produtos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-chart-bar fa-4x text-warning"></i>
+                </div>
+                <h5 class="card-title">Relatórios</h5>
+                <p class="card-text text-muted">
+                    Gere relatórios detalhados de estoque, movimentações e análises para tomada de decisões.
+                </p>
+                <a href="{% url 'relatorio_completo' %}" class="btn btn-warning-modern">
+                    <i class="fas fa-file-alt"></i> Ver Relatórios
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-bell fa-4x text-danger"></i>
+                </div>
+                <h5 class="card-title">Alertas</h5>
+                <p class="card-text text-muted">
+                    Monitore produtos próximos ao vencimento e receba notificações importantes do sistema.
+                </p>
+                <a href="{% url 'alertas' %}" class="btn btn-danger-modern">
+                    <i class="fas fa-exclamation-triangle"></i> Ver Alertas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card-modern h-100">
+            <div class="card-body-modern text-center">
+                <div class="mb-4">
+                    <i class="fas fa-history fa-4x text-secondary"></i>
+                </div>
+                <h5 class="card-title">Histórico</h5>
+                <p class="card-text text-muted">
+                    Acompanhe todas as movimentações e alterações realizadas no sistema de estoque.
+                </p>
+                <a href="{% url 'historico_movimentacoes' %}" class="btn btn-secondary-modern">
+                    <i class="fas fa-history"></i> Ver Histórico
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Adicionar animações aos cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.card-modern');
+        
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
             background: #0056b3;
         }
 
@@ -262,6 +499,7 @@
             <div class="nav-links">
                 <a href="{% url 'painel' %}">📋 Painel</a>
                 <a href="{% url 'alertas' %}">🔔 Alertas</a>
+                <a href="{% url 'movimentacao_estoque' %}">🔄 Movimentação</a>
                 <a href="{% url 'historico_movimentacoes' %}">📈 Histórico</a>
                 <a href="{% url 'cadastrar_produto' %}">➕ Cadastrar Produto</a>
                 <a href="{% url 'importar_produtos_csv' %}">📦 Importar CSV</a>

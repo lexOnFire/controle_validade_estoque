@@ -539,8 +539,10 @@
             <div class="form-group">
                 <label class="form-label">Categoria</label>
                 <select name="categoria_lote" class="form-input">
+                    <option value="freezer">Freezer</option>
+                    <option value="geladeira">Geladeira</option>
                     <option value="meio" selected>Meio</option>
-                    <option value="inteiro">Inteiro</option>
+                    <option value="seco">Seco</option>
                 </select>
             </div>
             
@@ -625,8 +627,10 @@
                             Categoria
                         </label>
                         <select name="categoria_individual" class="form-input" required>
+                            <option value="freezer">🧊 Freezer</option>
+                            <option value="geladeira">❄️ Geladeira</option>
                             <option value="meio" selected>🌡️ Meio</option>
-                            <option value="inteiro">📦 Inteiro</option>
+                            <option value="seco">☀️ Seco</option>
                         </select>
                     </div>
                 </div>
@@ -657,11 +661,17 @@
             <button class="filter-btn" onclick="filterAddresses('occupied')">
                 <i class="fas fa-boxes"></i> Ocupados
             </button>
+            <button class="filter-btn" onclick="filterAddresses('freezer')">
+                <i class="fas fa-snowflake"></i> Freezer
+            </button>
+            <button class="filter-btn" onclick="filterAddresses('geladeira')">
+                <i class="fas fa-thermometer-quarter"></i> Geladeira
+            </button>
             <button class="filter-btn" onclick="filterAddresses('meio')">
                 <i class="fas fa-thermometer-half"></i> Meio
             </button>
-            <button class="filter-btn" onclick="filterAddresses('inteiro')">
-                <i class="fas fa-archive"></i> Inteiro
+            <button class="filter-btn" onclick="filterAddresses('seco')">
+                <i class="fas fa-sun"></i> Seco
             </button>
         </div>
     </div>
@@ -798,8 +808,10 @@
                 case 'occupied':
                     show = status === 'occupied';
                     break;
+                case 'freezer':
+                case 'geladeira':
                 case 'meio':
-                case 'inteiro':
+                case 'seco':
                     show = category === filter;
                     break;
             }
@@ -846,8 +858,8 @@
         const checkboxes = document.querySelectorAll('.address-checkbox:checked');
         if (checkboxes.length === 0) return;
         
-        const newCategory = prompt('Nova categoria (meio, inteiro):');
-        if (!newCategory || !['meio', 'inteiro'].includes(newCategory)) {
+        const newCategory = prompt('Nova categoria (freezer, geladeira, meio, seco):');
+        if (!newCategory || !['freezer', 'geladeira', 'meio', 'seco'].includes(newCategory)) {
             alert('Categoria inválida!');
             return;
         }

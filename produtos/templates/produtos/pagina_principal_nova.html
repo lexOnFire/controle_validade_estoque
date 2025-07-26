@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Controle de Estoque</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 2.5em;
+        }
+
+        .main-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-main.success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+
+        .btn-main.warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .btn-main.info {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+        }
+
+        .btn-main.danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .painel-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .painel-header {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .painel-content {
+            max-height: 600px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease;
+        }
+
+        .painel-content.hidden {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .quick-search {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn-search {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .toggle-panel-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        /* Cards Layout */
+        .enderecos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .endereco-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+
+        .endereco-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .endereco-card.endereco-vazio {
+            border: 2px dashed #dee2e6;
+            background: #f8f9fa;
+        }
+
+        .endereco-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .endereco-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #495057;
+        }
+
+        .endereco-details {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .produtos-list {
+            padding: 15px;
+        }
+
+        .produto-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+
+        .produto-nome {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .produto-codigo {
+            background: #495057;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .produto-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .produto-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .endereco-vazio-content {
+            padding: 30px 20px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .vazio-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .enderecos-grid {
+                grid-template-columns: 1fr;
+            }
+            .search-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Cabeçalho -->
+        <div class="header">
+            <h1>🏪 Sistema de Controle de Estoque</h1>
+            
+            <!-- Botões principais -->
+            <div class="main-buttons">
+                <a href="{% url 'cadastrar_produto' %}" class="btn-main success">
+                    ➕ Cadastrar Produto
+                </a>
+                <a href="{% url 'cadastrar_enderecos' %}" class="btn-main info">
+                    🏢 Cadastrar Endereço
+                </a>
+                <a href="{% url 'relatorio_completo' %}" class="btn-main warning">
+                    📊 Relatório Completo
+                </a>
+                <a href="{% url 'listar_produtos' %}" class="btn-main">
+                    📋 Listar Produtos
+                </a>
+                <a href="{% url 'alertas' %}" class="btn-main danger">
+                    🔔 Alertas
+                </a>
+                <a href="{% url 'historico_movimentacoes' %}" class="btn-main">
+                    📈 Histórico
+                </a>
+            </div>
+        </div>
+
+        <!-- Painel do Estoque -->
+        <div class="painel-container">
+            <div class="painel-header">
+                <h2>📦 Painel do Estoque</h2>
+                <button class="toggle-panel-btn" onclick="togglePanel()">
+                    <span id="toggle-text">👁️ Mostrar Painel</span>
+                </button>
+            </div>
+            <div class="painel-content hidden" id="painel-content">
+                {% if organizacao %}
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ total_enderecos }}</div>
+                            <div class="stat-label">Endereços</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ enderecos_com_estoque }}</div>
+                            <div class="stat-label">Ocupados</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ total_produtos }}</div>
+                            <div class="stat-label">Produtos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ taxa_ocupacao }}%</div>
+                            <div class="stat-label">Taxa de Ocupação</div>
+                        </div>
+                    </div>
+
+                    <div class="enderecos-grid">
+                        {% for rua, predios in organizacao.items %}
+                            {% for predio, enderecos_list in predios.items %}
+                                {% for endereco_info in enderecos_list %}
+                                    <div class="endereco-card {% if not endereco_info.tem_produtos %}endereco-vazio{% endif %}">
+                                        <div class="endereco-header">
+                                            <div class="endereco-title">
+                                                📍 {{ endereco_info.endereco.categoria_armazenamento|default:"Local" }}
+                                            </div>
+                                            <div class="endereco-details">
+                                                Rua {{ endereco_info.endereco.rua }}, Prédio {{ endereco_info.endereco.predio }}, 
+                                                Nível {{ endereco_info.endereco.nivel }}, AP {{ endereco_info.endereco.ap }}
+                                            </div>
+                                        </div>
+                                        
+                                        {% if endereco_info.tem_produtos %}
+                                            <div class="produtos-list">
+                                                {% for produto_info in endereco_info.produtos %}
+                                                    <div class="produto-card">
+                                                        <div class="produto-nome">{{ produto_info.produto.nome }}</div>
+                                                        <div class="produto-codigo">{{ produto_info.produto.codigo }}</div>
+                                                        
+                                                        <div class="produto-info">
+                                                            <span>📅 Validade: 
+                                                                {% if produto_info.proxima_validade %}
+                                                                    {{ produto_info.proxima_validade|date:"d/m/Y" }}
+                                                                {% else %}
+                                                                    Sem data
+                                                                {% endif %}
+                                                            </span>
+                                                            <span>📦 {{ produto_info.total_lotes }} lote{{ produto_info.total_lotes|pluralize }}</span>
+                                                        </div>
+                                                        
+                                                        <div class="produto-actions">
+                                                            <a href="{% url 'detalhes_produto' produto_info.produto.id %}" 
+                                                               class="btn-action btn-primary">
+                                                                👁️ Detalhes
+                                                            </a>
+                                                            <a href="{% url 'editar_estoque' produto_info.estoque.id %}" 
+                                                               class="btn-action btn-warning">
+                                                                ✏️ Editar
+                                                            </a>
+                                                            <a href="{% url 'remover_produto' produto_info.estoque.id %}" 
+                                                               class="btn-action btn-danger"
+                                                               onclick="return confirm('Tem certeza que deseja remover este produto?')">
+                                                                🗑️ Remover
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="endereco-vazio-content">
+                                                <div class="vazio-icon">📭</div>
+                                                <p>Endereço disponível</p>
+                                                <a href="{% url 'buscar_produto_endereco' endereco_info.endereco.id %}" 
+                                                   class="btn-action btn-primary">
+                                                    🔍 Pesquisar Produto
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="padding: 20px; text-align: center; color: #6c757d;">
+                        <p>📦 Nenhum produto encontrado no estoque.</p>
+                        <a href="{% url 'cadastrar_produto' %}" class="btn-main success">
+                            ➕ Cadastrar Primeiro Produto
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Seção de busca rápida -->
+        <div class="quick-search">
+            <h3>🔍 Busca Rápida</h3>
+            <form method="GET" action="" class="search-form">
+                <div class="form-group">
+                    <label for="busca_codigo">Código do Produto:</label>
+                    <input type="text" 
+                           id="busca_codigo" 
+                           name="busca_codigo" 
+                           placeholder="Digite o código para buscar..."
+                           value="{{ busca_codigo }}"
+                           class="form-input">
+                </div>
+                <button type="submit" class="btn-search">
+                    🔍 Buscar
+                </button>
+            </form>
+            
+            {% if busca_codigo and not resultado_busca %}
+                <div style="margin-top: 15px; padding: 15px; background: #f8d7da; color: #721c24; border-radius: 8px;">
+                    ❌ Produto com código "{{ busca_codigo }}" não encontrado.
+                    <a href="{% url 'cadastrar_produto' %}?codigo={{ busca_codigo }}">
+                        Clique aqui para cadastrá-lo
+                    </a>
+                </div>
+            {% elif resultado_busca %}
+                <div style="margin-top: 15px; padding: 15px; background: #d4edda; color: #155724; border-radius: 8px;">
+                    ✅ Produto encontrado: <strong>{{ resultado_busca.nome }}</strong> (Código: {{ resultado_busca.codigo }})
+                </div>
+            {% endif %}
+        </div>
+
+        <script>
+            function togglePanel() {
+                const panel = document.getElementById('painel-content');
+                const toggleText = document.getElementById('toggle-text');
+                
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    toggleText.textContent = '🙈 Ocultar Painel';
+                } else {
+                    panel.classList.add('hidden');
+                    toggleText.textContent = '👁️ Mostrar Painel';
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

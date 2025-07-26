@@ -307,252 +307,6 @@
         display: none;
     }
 
-    /* Search Section Styles */
-    .search-section {
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        border: 1px solid #e5e7eb;
-    }
-
-    .search-form {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .search-input {
-        flex: 1;
-        min-width: 200px;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: var(--border-radius);
-        font-size: 1rem;
-        transition: var(--transition);
-    }
-
-    .search-input:focus {
-        border-color: var(--primary-color);
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .search-btn {
-        padding: 0.75rem 1.5rem;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-        color: white;
-        border: none;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        cursor: pointer;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .search-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Search Results Styles */
-    .search-results {
-        display: none;
-        background: white;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        border: 1px solid #e5e7eb;
-        margin-bottom: 2rem;
-        overflow: hidden;
-    }
-
-    .search-results.show {
-        display: block;
-        animation: slideDown 0.3s ease;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .search-results-header {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .close-search-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .close-search-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: scale(1.1);
-    }
-
-    .product-details-card {
-        padding: 2rem;
-    }
-
-    .product-main-info {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .product-icon-large {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        font-weight: 700;
-    }
-
-    .product-main-details h3 {
-        margin: 0 0 0.5rem 0;
-        color: var(--text-color);
-        font-size: 1.5rem;
-    }
-
-    .product-code-large {
-        background: #f3f4f6;
-        padding: 0.5rem 1rem;
-        border-radius: var(--border-radius);
-        font-family: 'Courier New', monospace;
-        font-weight: 600;
-        display: inline-block;
-        margin-bottom: 1rem;
-    }
-
-    .product-info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .info-card {
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .info-card h5 {
-        margin: 0 0 1rem 0;
-        color: var(--primary-color);
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .validity-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .validity-badge-large {
-        padding: 0.5rem 1rem;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        font-size: 0.875rem;
-    }
-
-    .validity-badge-large.vencido {
-        background: #fee2e2;
-        color: #dc2626;
-    }
-
-    .validity-badge-large.vence-em-breve {
-        background: #fef3c7;
-        color: #d97706;
-    }
-
-    .validity-badge-large.proximo-ao-vencimento {
-        background: #fef3c7;
-        color: #d97706;
-    }
-
-    .validity-badge-large.valido {
-        background: #dcfce7;
-        color: #16a34a;
-    }
-
-    .address-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .address-list li {
-        background: white;
-        padding: 1rem;
-        border-radius: var(--border-radius);
-        margin-bottom: 0.5rem;
-        border: 1px solid #e5e7eb;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .address-info {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .address-type-badge-small {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 3rem 2rem;
-        color: var(--secondary-color);
-    }
-
-    .no-results i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
     @media (max-width: 768px) {
         .filter-buttons {
             justify-content: center;
@@ -584,43 +338,6 @@
         Visão Geral do Estoque
     </h1>
     <p class="page-subtitle">Visualização completa dos produtos organizados por endereços</p>
-</div>
-
-<!-- Search Section -->
-<div class="search-section">
-    <h5 class="mb-3">
-        <i class="fas fa-search text-primary"></i>
-        Busca Rápida por Código
-    </h5>
-    <form class="search-form" onsubmit="searchProduct(event)">
-        <input 
-            type="text" 
-            class="search-input" 
-            id="searchInput"
-            placeholder="Digite o código do produto..."
-            required
-        >
-        <button type="submit" class="search-btn">
-            <i class="fas fa-search"></i>
-            Buscar Produto
-        </button>
-    </form>
-</div>
-
-<!-- Search Results -->
-<div class="search-results" id="searchResults">
-    <div class="search-results-header">
-        <h5 class="mb-0">
-            <i class="fas fa-search"></i>
-            Resultado da Busca
-        </h5>
-        <button class="close-search-btn" onclick="closeSearchResults()">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    <div class="product-details-card" id="searchResultsContent">
-        <!-- Conteúdo será carregado via JavaScript -->
-    </div>
 </div>
 
 <!-- Summary Statistics -->
@@ -667,6 +384,41 @@
         </button>
     </div>
 </div>
+
+<!-- Search Results -->
+{% if resultado_busca %}
+<div class="card-modern mb-4">
+    <div class="card-header-modern">
+        <h5 class="mb-0">
+            <i class="fas fa-search text-success"></i>
+            Resultado da Busca: "{{ busca_codigo }}"
+        </h5>
+    </div>
+    <div class="card-body-modern">
+        <div class="product-item">
+            <div class="product-icon">
+                {{ resultado_busca.nome.0|upper }}
+            </div>
+            <div class="product-info">
+                <div class="product-name">{{ resultado_busca.nome }}</div>
+                <div class="product-details">
+                    <span class="product-code">{{ resultado_busca.codigo }}</span>
+                    {% if resultado_busca.proxima_validade %}
+                        <span class="validity-badge validity-{{ resultado_busca.status_validade|lower }}">
+                            {{ resultado_busca.proxima_validade|date:"d/m/Y" }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="ms-auto">
+                <a href="{% url 'detalhes_produto' resultado_busca.id %}" class="btn btn-sm btn-primary-modern">
+                    <i class="fas fa-eye"></i> Detalhes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Warehouse Organization -->
 {% for rua, predios in organizacao.items %}
@@ -860,159 +612,6 @@
                 }
             });
         }, 350);
-    }
-
-    // Search functionality
-    async function searchProduct(event) {
-        event.preventDefault();
-        
-        const codigo = document.getElementById('searchInput').value.trim();
-        if (!codigo) return;
-        
-        const button = event.target.querySelector('.search-btn');
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
-        button.disabled = true;
-        
-        try {
-            const response = await fetch(`/produtos/api/buscar-produto/?codigo=${encodeURIComponent(codigo)}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                displaySearchResults(data.produto);
-            } else {
-                displayNoResults(codigo);
-            }
-        } catch (error) {
-            console.error('Erro na busca:', error);
-            displayError();
-        } finally {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
-    }
-
-    function displaySearchResults(produto) {
-        const resultsDiv = document.getElementById('searchResults');
-        const contentDiv = document.getElementById('searchResultsContent');
-        
-        // Criar endereços HTML
-        let enderecosHtml = '';
-        if (produto.enderecos && produto.enderecos.length > 0) {
-            enderecosHtml = produto.enderecos.map(endereco => `
-                <li>
-                    <div class="address-info">
-                        <i class="fas fa-map-marker-alt text-primary"></i>
-                        <strong>${endereco.codigo}</strong>
-                        <span class="address-type-badge-small" style="background: ${endereco.tipo === 'meio' ? '#fef3c7; color: #d97706' : '#e0e7ff; color: #3730a3'};">
-                            ${endereco.tipo}
-                        </span>
-                    </div>
-                    <small>Qtd: ${endereco.quantidade}</small>
-                </li>
-            `).join('');
-        } else {
-            enderecosHtml = '<li style="text-align: center; color: #6b7280;">Produto não encontrado no estoque</li>';
-        }
-        
-        contentDiv.innerHTML = `
-            <div class="product-main-info">
-                <div class="product-icon-large">
-                    ${produto.nome.charAt(0).toUpperCase()}
-                </div>
-                <div class="product-main-details">
-                    <h3>${produto.nome}</h3>
-                    <div class="product-code-large">${produto.codigo}</div>
-                    ${produto.categoria ? `<p style="color: #6b7280; margin: 0;">Categoria: ${produto.categoria}</p>` : ''}
-                </div>
-            </div>
-            
-            <div class="product-info-grid">
-                <div class="info-card">
-                    <h5><i class="fas fa-calendar-alt"></i> Informações de Validade</h5>
-                    ${produto.proxima_validade ? `
-                        <div class="validity-info">
-                            <span>Próxima Validade:</span>
-                            <span class="validity-badge-large validity-${produto.status_validade.toLowerCase().replace(/ /g, '-')}">
-                                ${produto.proxima_validade}
-                            </span>
-                        </div>
-                        <div style="font-size: 0.875rem; color: #6b7280;">
-                            Status: ${produto.status_validade}
-                            ${produto.dias_para_vencer !== null ? ` (${produto.dias_para_vencer} dias)` : ''}
-                        </div>
-                    ` : '<div style="color: #6b7280;">Sem informações de validade</div>'}
-                </div>
-                
-                <div class="info-card">
-                    <h5><i class="fas fa-boxes"></i> Estoque Total</h5>
-                    <div style="font-size: 1.5rem; font-weight: 600; color: var(--primary-color);">
-                        ${produto.quantidade_total || 0} unidades
-                    </div>
-                    <div style="font-size: 0.875rem; color: #6b7280;">
-                        Em ${produto.enderecos ? produto.enderecos.length : 0} endereço(s)
-                    </div>
-                </div>
-            </div>
-            
-            <div class="info-card">
-                <h5><i class="fas fa-map-marker-alt"></i> Endereços de Armazenamento</h5>
-                <ul class="address-list">
-                    ${enderecosHtml}
-                </ul>
-            </div>
-            
-            <div style="text-align: center; margin-top: 2rem;">
-                <a href="/produtos/detalhes-produto/${produto.id}/" class="btn btn-primary-modern">
-                    <i class="fas fa-eye"></i> Ver Detalhes Completos
-                </a>
-            </div>
-        `;
-        
-        resultsDiv.classList.add('show');
-        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function displayNoResults(codigo) {
-        const resultsDiv = document.getElementById('searchResults');
-        const contentDiv = document.getElementById('searchResultsContent');
-        
-        contentDiv.innerHTML = `
-            <div class="no-results">
-                <i class="fas fa-search-minus"></i>
-                <h4>Produto não encontrado</h4>
-                <p>Não foi possível encontrar um produto com o código "<strong>${codigo}</strong>".</p>
-                <div style="margin-top: 2rem;">
-                    <a href="/produtos/cadastrar-produto/" class="btn btn-success-modern">
-                        <i class="fas fa-plus"></i> Cadastrar Novo Produto
-                    </a>
-                </div>
-            </div>
-        `;
-        
-        resultsDiv.classList.add('show');
-        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function displayError() {
-        const resultsDiv = document.getElementById('searchResults');
-        const contentDiv = document.getElementById('searchResultsContent');
-        
-        contentDiv.innerHTML = `
-            <div class="no-results">
-                <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
-                <h4>Erro na busca</h4>
-                <p>Ocorreu um erro ao buscar o produto. Tente novamente.</p>
-            </div>
-        `;
-        
-        resultsDiv.classList.add('show');
-    }
-
-    function closeSearchResults() {
-        const resultsDiv = document.getElementById('searchResults');
-        resultsDiv.classList.remove('show');
-        document.getElementById('searchInput').value = '';
     }
 
     // Initialize page

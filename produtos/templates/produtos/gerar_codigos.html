@@ -1,0 +1,248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏷️ Gerar Códigos de Endereços</title>
+    <style>
+    .generation-container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .generation-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .generation-header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 300;
+    }
+    
+    .generation-content {
+        padding: 40px;
+        text-align: center;
+    }
+    
+    .status-card {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .status-number {
+        font-size: 48px;
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 10px;
+    }
+    
+    .status-label {
+        font-size: 18px;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+    
+    .status-description {
+        color: #495057;
+        line-height: 1.6;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+    
+    .btn-action {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    
+    .info-section {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 30px;
+        text-align: left;
+    }
+    
+    .info-section h4 {
+        color: #1976d2;
+        margin-bottom: 15px;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #e1f5fe;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .info-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .example-section {
+        background: #f1f8e9;
+        border: 1px solid #c8e6c9;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: left;
+    }
+    
+    .example-section h4 {
+        color: #388e3c;
+        margin-bottom: 15px;
+    }
+    
+    .code-example {
+        background: #263238;
+        color: #00e676;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        margin: 10px 0;
+    }
+</style>
+</head>
+<body>
+<div class="generation-container">
+    <div class="generation-header">
+        <h1>🏷️ Gerar Códigos de Endereços</h1>
+        <p>Sistema automático de geração de códigos únicos</p>
+    </div>
+    
+    <div class="generation-content">
+        <div class="status-card">
+            <div class="status-number">{{ enderecos_sem_codigo }}</div>
+            <div class="status-label">Endereços sem código</div>
+            <div class="status-description">
+                {% if enderecos_sem_codigo > 0 %}
+                    Estes endereços receberão códigos únicos no formato <strong>RUA-PRÉDIO-NÍVEL-AP</strong>
+                {% else %}
+                    Todos os endereços já possuem códigos únicos! ✅
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if enderecos_sem_codigo > 0 %}
+        <form method="POST" onsubmit="return confirm('Confirma a geração de códigos para {{ enderecos_sem_codigo }} endereços?')">
+            {% csrf_token %}
+            <div class="action-buttons">
+                <button type="submit" class="btn-action btn-primary">
+                    🚀 Gerar Códigos Agora
+                </button>
+                <a href="{% url 'cadastrar_enderecos' %}" class="btn-action btn-secondary">
+                    ← Voltar
+                </a>
+            </div>
+        </form>
+        {% else %}
+        <div class="action-buttons">
+            <a href="{% url 'cadastrar_enderecos' %}" class="btn-action btn-primary">
+                ← Voltar ao Gerenciamento
+            </a>
+            <a href="{% url 'busca_endereco_avancada' %}" class="btn-action btn-secondary">
+                🔍 Buscar Endereços
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="info-section">
+            <h4>📋 Como funciona o sistema de códigos</h4>
+            <ul class="info-list">
+                <li>
+                    🏷️ <strong>Formato:</strong> RUA-PRÉDIO-NÍVEL-AP (ex: 01-02-00-03)
+                </li>
+                <li>
+                    🔢 <strong>Padronização:</strong> Números com zeros à esquerda para ordenação
+                </li>
+                <li>
+                    🔍 <strong>Busca:</strong> Códigos permitem localização rápida de endereços
+                </li>
+                <li>
+                    📱 <strong>QR Code:</strong> Cada código pode gerar um QR Code único
+                </li>
+                <li>
+                    🔒 <strong>Único:</strong> Cada endereço possui um código exclusivo
+                </li>
+            </ul>
+        </div>
+        
+        <div class="example-section">
+            <h4>💡 Exemplos de códigos que serão gerados</h4>
+            <div class="code-example">
+Rua 1, Prédio 2, Nível 0, AP 3  →  01-02-00-03
+Rua 5, Prédio 10, Nível 2, AP 1  →  05-10-02-01
+Rua 12, Prédio 3, Nível 0, AP 15  →  12-03-00-15
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Animação de loading para formulário
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '⏳ Gerando códigos...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+});
+</script>
+</body>
+</html>
