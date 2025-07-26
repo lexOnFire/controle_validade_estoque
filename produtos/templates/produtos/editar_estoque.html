@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Estoque - {{ produto.nome }}</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #fff; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header h2 { 
+            color: #2c3e50; 
+            margin: 0;
+            font-size: 2em;
+            font-weight: 300;
+        }
+        
+        .produto-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .produto-info h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label { 
+            font-weight: bold; 
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        input, textarea, button { 
+            padding: 12px; 
+            border-radius: 8px; 
+            border: 2px solid #dee2e6;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        button { 
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: #fff; 
+            border: none; 
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover { 
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c82333, #a02622);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #1e7e34, #155724);
+        }
+        
+        .lotes-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .lote-item {
+            background: white;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .lote-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .lote-detail {
+            font-size: 0.9em;
+        }
+        
+        .lote-detail strong {
+            color: #2c3e50;
+        }
+        
+        .lote-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.85em;
+        }
+        
+        .actions-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .action-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: #5a6268;
+        }
+        
+        .messages {
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .form-row, .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .lote-item {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .actions-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Mensagens -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="header">
+            <h2>✏️ Editar Estoque</h2>
+            <p>Gerencie o produto armazenado neste local</p>
+        </div>
+        
+        <!-- Informações do Produto -->
+        <div class="produto-info">
+            <h3>📦 Informações do Produto</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Nome do Produto</div>
+                    <div class="info-value">{{ produto.nome }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Código</div>
+                    <div class="info-value">{{ produto.codigo }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Local de Armazenamento</div>
+                    <div class="info-value">{{ estoque.local }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data de Armazenamento</div>
+                    <div class="info-value">{{ estoque.data_armazenado|date:"d/m/Y" }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Editar Dados do Produto -->
+        <div class="section">
+            <h3>🏷️ Editar Dados do Produto</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome_produto">📦 Nome do Produto:</label>
+                        <input type="text" 
+                               name="nome_produto" 
+                               id="nome_produto" 
+                               value="{{ produto.nome }}" 
+                               placeholder="Nome do produto"
+                               required />
+                    </div>
+                    <div class="form-group">
+                        <label for="codigo_produto">🔢 Código:</label>
+                        <input type="text" 
+                               name="codigo_produto" 
+                               id="codigo_produto" 
+                               value="{{ produto.codigo }}" 
+                               placeholder="Código do produto"
+                               required />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="peso_produto">⚖️ Peso/Tamanho:</label>
+                        <input type="text" 
+                               name="peso_produto" 
+                               id="peso_produto" 
+                               value="{{ produto.peso }}" 
+                               placeholder="Ex: 1,5KG" />
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria_produto">📂 Categoria:</label>
+                        <input type="text" 
+                               name="categoria_produto" 
+                               id="categoria_produto" 
+                               value="{{ produto.categoria|default:'' }}" 
+                               placeholder="Categoria do produto" />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fornecedor_produto">🏢 Fornecedor:</label>
+                    <input type="text" 
+                           name="fornecedor_produto" 
+                           id="fornecedor_produto" 
+                           value="{{ produto.fornecedor|default:'' }}" 
+                           placeholder="Nome do fornecedor" />
+                </div>
+                
+                <!-- Campos do estoque também -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="data_armazenado">📅 Data de Armazenamento:</label>
+                        <input type="date" 
+                               name="data_armazenado" 
+                               id="data_armazenado" 
+                               value="{{ estoque.data_armazenado|date:'Y-m-d' }}" 
+                               required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="observacoes">📝 Observações:</label>
+                    <textarea name="observacoes" 
+                              id="observacoes" 
+                              placeholder="Adicione observações sobre este produto...">{{ estoque.observacoes|default:'' }}</textarea>
+                </div>
+                
+                <button type="submit" class="btn-success">
+                    💾 Salvar Produto e Estoque
+                </button>
+            </form>
+        </div>
+        
+        <!-- Gerenciar Lotes -->
+        <div class="section">
+            <h3>📋 Lotes do Produto (FIFO)</h3>
+            
+            {% if lotes %}
+            <ul class="lotes-list">
+                {% for lote in lotes %}
+                <li class="lote-item">
+                    <div class="lote-info">
+                        <div class="lote-detail">
+                            <strong>Lote:</strong> {{ lote.numero_lote|default:"Sem número" }}
+                        </div>
+                        <div class="lote-detail">
+                            <strong>Validade:</strong> {{ lote.validade|date:"d/m/Y" }}
+                        </div>
+                        <div class="lote-detail">
+                            <strong>Quantidade:</strong> {{ lote.quantidade }}
+                        </div>
+                        <div class="lote-detail">
+                            <strong>Status:</strong> 
+                            {% with dias=lote.dias_para_vencer %}
+                                {% if dias < 0 %}
+                                    <span style="color: #dc3545;">❌ Vencido</span>
+                                {% elif dias <= 30 %}
+                                    <span style="color: #fd7e14;">⚠️ Próximo ao vencimento</span>
+                                {% else %}
+                                    <span style="color: #28a745;">✅ Válido</span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="lote-actions">
+                        <form method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="remover_lote_id" value="{{ lote.id }}" />
+                            <button type="submit" 
+                                    class="btn-danger btn-small" 
+                                    onclick="return confirm('Tem certeza que deseja remover este lote?')">
+                                🗑️ Remover
+                            </button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="text-align: center; color: #6c757d; padding: 20px;">
+                📭 Nenhum lote cadastrado para este produto
+            </p>
+            {% endif %}
+            
+            <!-- Adicionar Novo Lote -->
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #dee2e6;">
+                <h4 style="color: #2c3e50;">➕ Adicionar Novo Lote</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nova_validade">📅 Data de Validade:</label>
+                            <input type="date" name="nova_validade" id="nova_validade" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="novo_numero_lote">🏷️ Número do Lote:</label>
+                            <input type="text" name="novo_numero_lote" id="novo_numero_lote" placeholder="Ex: L001, LOTE2024..." />
+                        </div>
+                        <div class="form-group">
+                            <label for="nova_quantidade">📦 Quantidade:</label>
+                            <input type="number" name="nova_quantidade" id="nova_quantidade" value="1" min="1" />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-success">
+                        ➕ Adicionar Lote
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Ações Perigosas -->
+        <div class="section" style="border: 2px solid #dc3545; background: #fff5f5;">
+            <h3 style="color: #dc3545;">⚠️ Ações Perigosas</h3>
+            <p style="color: #721c24; margin-bottom: 20px;">
+                <strong>Atenção:</strong> Esta ação removerá completamente o produto deste local e não pode ser desfeita.
+            </p>
+            
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="excluir_estoque" value="1" />
+                <button type="submit" 
+                        class="btn-danger" 
+                        onclick="return confirm('⚠️ ATENÇÃO!\n\nEsta ação irá:\n• Remover o produto deste local\n• Liberar o endereço para outros produtos\n• Criar um registro no histórico\n\nTem certeza que deseja continuar?')">
+                    🗑️ Remover Produto do Estoque
+                </button>
+            </form>
+        </div>
+        
+        <!-- Botões de Navegação -->
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{% url 'painel' %}" class="back-link">
+                ← Voltar ao Painel
+            </a>
+            <a href="{% url 'buscar_produto' %}?produto={{ produto.nome }}" class="back-link" style="background: #007bff; margin-left: 10px;">
+                👁️ Ver Detalhes do Produto
+            </a>
+        </div>
+    </div>
+</body>
+</html>

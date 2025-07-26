@@ -69,73 +69,6 @@
             padding: 30px;
         }
 
-        /* Estilos para área de busca */
-        .search-area {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border: 2px solid #e9ecef;
-        }
-
-        .search-form {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .search-input {
-            flex: 1;
-            min-width: 250px;
-            padding: 12px 15px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-        }
-
-        .search-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .search-btn:hover {
-            background: linear-gradient(135deg, #0056b3, #004085);
-            transform: translateY(-1px);
-        }
-
-        .search-result {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
-        .search-result.found {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .search-result.not-found {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
         /* Estilos para ruas */
         .rua-section {
             margin-bottom: 30px;
@@ -403,138 +336,6 @@
                 justify-content: center;
             }
         }
-
-        /* Estilos para o painel detalhado */
-        .produto-item-detalhado {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .produto-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .produto-principal {
-            flex: 1;
-        }
-
-        .produto-nome {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .produto-codigo {
-            color: #6c757d;
-            font-size: 0.9em;
-            font-family: 'Courier New', monospace;
-        }
-
-        .produto-status {
-            display: flex;
-            align-items: center;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .status-badge.vencido {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-badge.vence-breve {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .status-badge.proximo-vencimento {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffd93d;
-        }
-
-        .status-badge.valido {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-badge.sem-lote {
-            background: #f8f9fa;
-            color: #6c757d;
-            border: 1px solid #dee2e6;
-        }
-
-        .produto-detalhes {
-            margin-bottom: 15px;
-        }
-
-        .detalhe-item {
-            margin-bottom: 8px;
-            font-size: 0.9em;
-            color: #495057;
-        }
-
-        .detalhe-item strong {
-            color: #2c3e50;
-        }
-
-        .lotes-resumo {
-            margin-top: 5px;
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-
-        .lote-mini {
-            background: #e9ecef;
-            color: #495057;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-family: 'Courier New', monospace;
-        }
-
-        /* Responsividade para o layout detalhado */
-        @media (max-width: 768px) {
-            .produto-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .produto-status {
-                align-self: flex-start;
-            }
-
-            .actions {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .btn {
-                text-align: center;
-                justify-content: center;
-            }
-        }
     </style>
 </head>
 <body>
@@ -568,36 +369,6 @@
         </div>
 
         <div class="content">
-            <!-- Área de busca por código -->
-            <div class="search-area">
-                <form method="GET" class="search-form">
-                    <input type="text" 
-                           name="busca_codigo" 
-                           class="search-input" 
-                           placeholder="🔍 Digite o código do produto para buscar..."
-                           value="{{ busca_codigo|default:'' }}">
-                    <button type="submit" class="search-btn">
-                        🔍 Buscar por Código
-                    </button>
-                </form>
-                
-                {% if resultado_busca %}
-                    {% if resultado_busca == 'not_found' %}
-                        <div class="search-result not-found">
-                            ❌ Produto não encontrado com este código!
-                        </div>
-                    {% else %}
-                        <div class="search-result found">
-                            ✅ Produto encontrado: <strong>{{ resultado_busca.nome }}</strong> ({{ resultado_busca.codigo }})
-                            <br>
-                            <a href="{% url 'buscar_produto' %}?produto={{ resultado_busca.nome }}" class="btn btn-primary" style="margin-top: 10px;">
-                                👁️ Ver Detalhes Completos
-                            </a>
-                        </div>
-                    {% endif %}
-                {% endif %}
-            </div>
-
             {% for rua, predios in organizacao.items %}
             <div class="rua-section">
                 <div class="rua-header" onclick="toggleRua('rua-{{ rua }}')">
@@ -641,84 +412,18 @@
                                 
                                 {% if endereco_info.produtos %}
                                     <div class="produto-list">
-                                        {% for produto_info in endereco_info.produtos %}
-                                        <div class="produto-item-detalhado">
-                                            <div class="produto-header">
-                                                <div class="produto-principal">
-                                                    <div class="produto-nome">{{ produto_info.produto.nome }}</div>
-                                                    <div class="produto-codigo">Código: {{ produto_info.produto.codigo }}</div>
-                                                </div>
-                                                <div class="produto-status">
-                                                    {% if produto_info.status_validade == "Vencido" %}
-                                                        <span class="status-badge vencido">❌ Vencido</span>
-                                                    {% elif produto_info.status_validade == "Vence em breve" %}
-                                                        <span class="status-badge vence-breve">⚠️ Vence em breve</span>
-                                                    {% elif produto_info.status_validade == "Próximo ao vencimento" %}
-                                                        <span class="status-badge proximo-vencimento">🟡 Próximo ao vencimento</span>
-                                                    {% elif produto_info.status_validade == "Válido" %}
-                                                        <span class="status-badge valido">✅ Válido</span>
-                                                    {% else %}
-                                                        <span class="status-badge sem-lote">⚪ Sem lote</span>
-                                                    {% endif %}
+                                        {% for estoque in endereco_info.produtos %}
+                                        <div class="produto-item">
+                                            <div>
+                                                <div class="produto-nome">{{ estoque.produto.nome }}</div>
+                                                <div class="produto-info">
+                                                    Data: {{ estoque.data_armazenado|date:"d/m/Y" }}
                                                 </div>
                                             </div>
-                                            
-                                            <div class="produto-detalhes">
-                                                <div class="detalhe-item">
-                                                    <strong>📍 Endereço:</strong> {{ endereco_info.endereco.rua }}-{{ endereco_info.endereco.predio }}-{{ endereco_info.endereco.nivel }}-{{ endereco_info.endereco.ap }}
-                                                </div>
-                                                
-                                                {% if produto_info.proxima_validade %}
-                                                <div class="detalhe-item">
-                                                    <strong>📅 Próxima Validade:</strong> {{ produto_info.proxima_validade|date:"d/m/Y" }}
-                                                    {% if produto_info.dias_para_vencer is not None %}
-                                                        ({{ produto_info.dias_para_vencer }} dias)
-                                                    {% endif %}
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if produto_info.total_lotes > 1 %}
-                                                <div class="detalhe-item">
-                                                    <strong>📦 Lotes:</strong> {{ produto_info.total_lotes }} lote{% if produto_info.total_lotes != 1 %}s{% endif %}
-                                                    <div class="lotes-resumo">
-                                                        {% for lote in produto_info.lotes %}
-                                                            <span class="lote-mini">{{ lote.validade|date:"d/m" }}</span>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                                {% endif %}
-                                                
-                                                <div class="detalhe-item">
-                                                    <strong>📆 Data Armazenamento:</strong> {{ produto_info.estoque.data_armazenado|date:"d/m/Y" }}
-                                                </div>
-                                                
-                                                {% if produto_info.produto.updated_at %}
-                                                <div class="detalhe-item">
-                                                    <strong>🔄 Última Alteração:</strong> {{ produto_info.produto.updated_at|date:"d/m/Y H:i" }}
-                                                </div>
-                                                {% endif %}
-                                                
-                                                {% if produto_info.estoque.observacoes %}
-                                                <div class="detalhe-item">
-                                                    <strong>📝 Observações:</strong> {{ produto_info.estoque.observacoes }}
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                            
                                             <div class="actions">
-                                                <a href="{% url 'buscar_produto' %}?produto={{ produto_info.produto.nome }}" class="btn btn-primary" title="Ver detalhes completos">
+                                                <a href="{% url 'buscar_produto' %}?produto={{ estoque.produto.nome }}" class="btn btn-primary" title="Ver detalhes">
                                                     👁️ Ver
                                                 </a>
-                                                {% if produto_info.estoque.id %}
-                                                <a href="{% url 'editar_estoque' produto_info.estoque.id %}" class="btn btn-warning" title="Editar produto deste local">
-                                                    ✏️ Editar
-                                                </a>
-                                                {% endif %}
-                                                {% if produto_info.estoque.id %}
-                                                <a href="{% url 'remover_produto' produto_info.estoque.id %}" class="btn btn-danger" title="Remover produto" onclick="return confirm('Tem certeza que deseja remover este produto?')">
-                                                    🗑️ Remover
-                                                </a>
-                                                {% endif %}
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -727,18 +432,10 @@
                                     <div class="endereco-vazio">
                                         🏗️ Endereço disponível para armazenamento
                                         <br>
-                                        <div style="margin-top: 15px;">
-                                            <a href="{% url 'buscar_produto_endereco' endereco_info.endereco.id %}" 
-                                               class="btn btn-primary" 
-                                               title="Buscar produto por código para armazenar neste endereço">
-                                                🔍 Buscar por Código
-                                            </a>
-                                            <a href="{% url 'armazenar_produto' %}?rua={{ endereco_info.endereco.rua }}&predio={{ endereco_info.endereco.predio }}&nivel={{ endereco_info.endereco.nivel }}&ap={{ endereco_info.endereco.ap }}" 
-                                               class="btn btn-secondary" 
-                                               title="Armazenar produto neste endereço">
-                                                📦 Armazenar Produto
-                                            </a>
-                                        </div>
+                                        <a href="{% url 'armazenar_produto' %}?rua={{ endereco_info.endereco.rua }}&predio={{ endereco_info.endereco.predio }}&nivel={{ endereco_info.endereco.nivel }}&ap={{ endereco_info.endereco.ap }}" 
+                                           class="btn btn-primary" style="margin-top: 10px;">
+                                            📦 Armazenar Produto
+                                        </a>
                                     </div>
                                 {% endif %}
                             </div>

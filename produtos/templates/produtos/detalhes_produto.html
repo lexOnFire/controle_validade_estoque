@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes do Produto - {{ produto.nome }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .info-card h3 {
+            color: #333;
+            margin: 0 0 20px 0;
+            font-size: 1.4em;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .lotes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .lotes-table th,
+        .lotes-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .lotes-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-valido {
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-proximo {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-vence-breve {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-vencido {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .actions-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 0 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .location-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .location-item:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-btn {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{% url 'pagina_principal' %}" class="back-btn">
+                ← Voltar ao Painel
+            </a>
+            <h1>📦 {{ produto.nome }}</h1>
+            <div class="subtitle">Código: <strong>{{ produto.codigo }}</strong></div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Informações Básicas -->
+            <div class="info-card">
+                <h3>📋 Informações Básicas</h3>
+                <div class="info-item">
+                    <span class="info-label">Nome:</span>
+                    <span class="info-value">{{ produto.nome }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Código:</span>
+                    <span class="info-value">{{ produto.codigo }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total de Lotes:</span>
+                    <span class="info-value">{{ total_lotes }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        {% if tem_estoque %}
+                            <span style="color: #28a745; font-weight: bold;">✅ Em Estoque</span>
+                        {% else %}
+                            <span style="color: #dc3545; font-weight: bold;">❌ Sem Estoque</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Localização -->
+            <div class="info-card">
+                <h3>📍 Localização de Armazenamento</h3>
+                {% if estoques %}
+                    {% for estoque in estoques %}
+                        <div class="location-item">
+                            <div><strong>{{ estoque.local.categoria_armazenamento|default:"Local" }}</strong></div>
+                            <div>🛣️ Rua {{ estoque.local.rua }}, 🏢 Prédio {{ estoque.local.predio }}</div>
+                            <div>📍 Nível {{ estoque.local.nivel }}, AP {{ estoque.local.ap }}</div>
+                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                📅 Armazenado em: {{ estoque.data_armazenado|date:"d/m/Y" }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        📦 Produto não está armazenado em nenhum local
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Lotes e Validades -->
+        <div class="info-card full-width">
+            <h3>📅 Lotes e Validades</h3>
+            {% if lotes_com_status %}
+                <table class="lotes-table">
+                    <thead>
+                        <tr>
+                            <th>Número do Lote</th>
+                            <th>Data de Validade</th>
+                            <th>Quantidade</th>
+                            <th>Status</th>
+                            <th>Dias Restantes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in lotes_com_status %}
+                            <tr>
+                                <td>{{ item.lote.numero_lote|default:"S/N" }}</td>
+                                <td>{{ item.lote.validade|date:"d/m/Y" }}</td>
+                                <td>{{ item.lote.quantidade|default:"1" }}</td>
+                                <td>
+                                    <span class="{{ item.status_class }}">
+                                        {{ item.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if item.dias_para_vencer >= 0 %}
+                                        {{ item.dias_para_vencer }} dias
+                                    {% else %}
+                                        {{ item.dias_para_vencer|add:"-1"|add:"-1"|add:"2" }} dias (vencido)
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty-state">
+                    📅 Nenhum lote cadastrado para este produto
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Ações -->
+        <div class="actions-section">
+            <h3>⚙️ Ações Disponíveis</h3>
+            <div style="margin-top: 20px;">
+                {% if tem_estoque %}
+                    {% for estoque in estoques %}
+                        <a href="{% url 'editar_estoque' estoque.id %}" class="action-btn btn-warning">
+                            ✏️ Editar Estoque
+                        </a>
+                        <a href="{% url 'remover_produto' estoque.id %}" 
+                           class="action-btn btn-danger"
+                           onclick="return confirm('Tem certeza que deseja remover este produto do estoque?')">
+                            🗑️ Remover do Estoque
+                        </a>
+                    {% endfor %}
+                {% endif %}
+                
+                <a href="{% url 'editar_produto' produto.id %}" class="action-btn btn-primary">
+                    📝 Editar Produto
+                </a>
+                
+                <a href="{% url 'armazenar_produto' produto.id %}" class="action-btn btn-primary">
+                    📦 Armazenar
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

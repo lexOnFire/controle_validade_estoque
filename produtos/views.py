@@ -256,120 +256,205 @@ def relatorio_estoque(request):
 
 @login_required
 def painel(request):
-    busca_codigo = request.GET.get('busca-codigo', '')
-    busca = request.GET.get('busca', '')
-    filtro_predio = request.GET.get('predio', '')
-    filtro_status = request.GET.get('status', '')
-    filtro_categoria = request.GET.get('categoria', '')
+    """
+    Painel principal que exibe o estoque organizando por rua e prédio.
+    ATUALIZADO: Agora inclui todos os prédios, mesmo os vazios, com busca por código.
+    """
+    # Processar busca por código
+    busca_codigo = request.GET.get('busca_codigo', '')
     resultado_busca = None
     
-    dados = Estoque.objects.select_related('produto', 'local').order_by('local__predio', 'local__rua', 'local__nivel', 'local__ap')
-
-    # Filtros de busca
-    if busca:
-        dados = dados.filter(
-            Q(produto__nome__icontains=busca) |
-            Q(produto__codigo__icontains=busca) |
-            Q(produto__fornecedor__icontains=busca)
-        )
-    
-    if filtro_predio:
-        dados = dados.filter(local__predio__icontains=filtro_predio)
-    
-    if filtro_categoria:
-        dados = dados.filter(produto__categoria__icontains=filtro_categoria)
-
     if busca_codigo:
         try:
             produto = Produto.objects.get(codigo=busca_codigo)
             resultado_busca = produto
         except Produto.DoesNotExist:
             resultado_busca = 'not_found'
-
-    today = date.today()
-    hoje_mais_30 = today + timedelta(days=30)
-
-    # Agrupa por produto/local
-    agrupados = {}
-    for item in dados:
-        chave = (item.produto.id, item.local.id)
-        # Mantém apenas o registro mais recente (maior data_armazenado)
-        if chave not in agrupados or item.data_armazenado > agrupados[chave].data_armazenado:
-            agrupados[chave] = item
-    agrupados_lista = list(agrupados.values())
-
-    # Filtro por status de validade
-    if filtro_status:
-        lista_filtrada = []
-        for item in agrupados_lista:
-            produto = item.produto
-            proxima_validade = produto.proxima_validade()
-            if proxima_validade:
-                if filtro_status == 'vencido' and proxima_validade <= today:
-                    lista_filtrada.append(item)
-                elif filtro_status == 'proximo_vencimento' and today < proxima_validade <= hoje_mais_30:
-                    lista_filtrada.append(item)
-                elif filtro_status == 'valido' and proxima_validade > hoje_mais_30:
-                    lista_filtrada.append(item)
-        agrupados_lista = lista_filtrada
-
-    # Agrupa os dados por prédio e depois por rua
-    predios = {}
-    for item in agrupados_lista:
-        predio_nome = item.local.predio
-        rua_nome = item.local.rua
-        
-        if predio_nome not in predios:
-            predios[predio_nome] = {}
-        
-        if rua_nome not in predios[predio_nome]:
-            predios[predio_nome][rua_nome] = []
-        
-        predios[predio_nome][rua_nome].append(item)
     
-    # Função para ordenação numérica quando possível
-    def ordenacao_inteligente(valor):
-        """Ordena numericamente se possível, senão alfabeticamente"""
-        try:
-            return (0, int(valor))  # Se for número, usa ordenação numérica
-        except ValueError:
-            return (1, valor.lower())  # Se não for número, usa ordenação alfabética
-
-    # Ordena os prédios, ruas e itens de forma inteligente
-    predios_ordenados = {}
+    # Buscar todos os endereços cadastrados (não apenas com estoque)
+    enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel')
     
-    # Ordena prédios
-    predios_ordenados_keys = sorted(predios.keys(), key=ordenacao_inteligente)
+    # Organizar por ruas e prédios
+    organizacao = {}
     
-    for predio_nome in predios_ordenados_keys:
-        predios_ordenados[predio_nome] = {}
+    for endereco in enderecos:
+        rua = endereco.rua
+        predio = endereco.predio
         
-        # Ordena ruas dentro do prédio
-        ruas_ordenadas_keys = sorted(predios[predio_nome].keys(), key=ordenacao_inteligente)
+        # Inicializar estrutura se não existir
+        if rua not in organizacao:
+            organizacao[rua] = {}
+        if predio not in organizacao[rua]:
+            organizacao[rua][predio] = []
         
-        for rua_nome in ruas_ordenadas_keys:
-            # Ordena itens dentro da rua por nível e depois AP (ambos numericamente quando possível)
-            predios_ordenados[predio_nome][rua_nome] = sorted(
-                predios[predio_nome][rua_nome], 
-                key=lambda x: (ordenacao_inteligente(str(x.local.nivel)), ordenacao_inteligente(str(x.local.ap)))
-            )
-
-    # Dados para filtros
-    predios_disponiveis = list(Armazenamento.objects.values_list('predio', flat=True).distinct().order_by('predio'))
-    categorias_disponiveis = list(Produto.objects.exclude(categoria__isnull=True).exclude(categoria='').values_list('categoria', flat=True).distinct().order_by('categoria'))
-
-    return render(request, 'produtos/painel.html', {
-        'predios': predios_ordenados,
-        'busca': busca,
+        # Buscar produtos no estoque para este endereço
+        produtos_estoque = Estoque.objects.filter(local=endereco).select_related('produto')
+        
+        # Enriquecer dados dos produtos com informações dos lotes
+        produtos_com_lotes = []
+        for estoque in produtos_estoque:
+            produto = estoque.produto
+            lotes = produto.lotes.all().order_by('validade')
+            
+            # Calcular informações de validade
+            proxima_validade = None
+            status_validade = "Sem lote"
+            dias_para_vencer = None
+            
+            if lotes.exists():
+                primeiro_lote = lotes.first()
+                proxima_validade = primeiro_lote.validade
+                
+                from datetime import date
+                hoje = date.today()
+                dias_para_vencer = (proxima_validade - hoje).days
+                
+                if dias_para_vencer < 0:
+                    status_validade = "Vencido"
+                elif dias_para_vencer <= 7:
+                    status_validade = "Vence em breve"
+                elif dias_para_vencer <= 30:
+                    status_validade = "Próximo ao vencimento"
+                else:
+                    status_validade = "Válido"
+            
+            produto_info = {
+                'estoque': estoque,
+                'produto': produto,
+                'lotes': lotes,
+                'proxima_validade': proxima_validade,
+                'status_validade': status_validade,
+                'dias_para_vencer': dias_para_vencer,
+                'total_lotes': lotes.count()
+            }
+            produtos_com_lotes.append(produto_info)
+        
+        # Adicionar informações do endereço
+        endereco_info = {
+            'endereco': endereco,
+            'produtos': produtos_com_lotes,
+            'tem_produtos': len(produtos_com_lotes) > 0,
+            'total_produtos': len(produtos_com_lotes)
+        }
+        
+        organizacao[rua][predio].append(endereco_info)
+    
+    # Calcular estatísticas
+    total_enderecos = Armazenamento.objects.count()
+    enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
+    total_produtos = Estoque.objects.count()
+    
+    context = {
+        'organizacao': organizacao,
+        'total_enderecos': total_enderecos,
+        'enderecos_com_estoque': enderecos_com_estoque,
+        'enderecos_vazios': total_enderecos - enderecos_com_estoque,
+        'total_produtos': total_produtos,
+        'taxa_ocupacao': round((enderecos_com_estoque/total_enderecos)*100, 1) if total_enderecos > 0 else 0,
         'busca_codigo': busca_codigo,
-        'filtro_predio': filtro_predio,
-        'filtro_status': filtro_status,
-        'filtro_categoria': filtro_categoria,
-        'resultado_busca': resultado_busca,
-        'predios_disponiveis': predios_disponiveis,
-        'categorias_disponiveis': categorias_disponiveis,
-        'today': today,
-        'hoje_mais_30': hoje_mais_30
+        'resultado_busca': resultado_busca
+    }
+    
+    return render(request, 'produtos/painel.html', context)
+
+def editar_estoque(request, estoque_id):
+    """
+    View para editar um item específico do estoque:
+    - Alterar data de armazenamento
+    - Editar observações
+    - Excluir do estoque
+    """
+    estoque = get_object_or_404(Estoque, id=estoque_id)
+    produto = estoque.produto
+    lotes = produto.lotes.all().order_by('validade')
+
+    if request.method == 'POST':
+        if 'excluir_estoque' in request.POST:
+            # Liberar endereço
+            estoque.local.livre = True
+            estoque.local.save()
+            
+            # Criar histórico de movimentação
+            HistoricoMovimentacao.objects.create(
+                produto=produto,
+                local_origem=estoque.local,
+                tipo_operacao='saida',
+                quantidade=1,
+                usuario=request.user.username if request.user.is_authenticated else 'Sistema',
+                observacoes='Produto removido via edição do estoque'
+            )
+            
+            # Remover estoque
+            estoque.delete()
+            messages.success(request, 'Produto removido do estoque com sucesso!')
+            return redirect('painel')
+            
+        elif 'nova_validade' in request.POST:
+            # Adicionar novo lote
+            nova_validade = request.POST.get('nova_validade')
+            novo_numero_lote = request.POST.get('novo_numero_lote', '')
+            nova_quantidade = request.POST.get('nova_quantidade', 1)
+            Lote.objects.create(
+                produto=produto, 
+                validade=nova_validade, 
+                numero_lote=novo_numero_lote, 
+                quantidade=nova_quantidade
+            )
+            messages.success(request, 'Novo lote adicionado com sucesso!')
+            return redirect('editar_estoque', estoque_id=estoque_id)
+            
+        elif 'remover_lote_id' in request.POST:
+            # Remover lote específico
+            remover_id = request.POST.get('remover_lote_id')
+            lote_removido = get_object_or_404(Lote, id=remover_id)
+            lote_removido.delete()
+            messages.success(request, 'Lote removido com sucesso!')
+            return redirect('editar_estoque', estoque_id=estoque_id)
+            
+        else:
+            # Atualizar dados do estoque E do produto
+            data_armazenado = request.POST.get('data_armazenado')
+            observacoes = request.POST.get('observacoes', '')
+            
+            # Dados do produto
+            nome_produto = request.POST.get('nome_produto', '').strip()
+            codigo_produto = request.POST.get('codigo_produto', '').strip()
+            peso_produto = request.POST.get('peso_produto', '').strip()
+            categoria_produto = request.POST.get('categoria_produto', '').strip()
+            fornecedor_produto = request.POST.get('fornecedor_produto', '').strip()
+            
+            # Validar e atualizar produto se houve mudanças
+            if nome_produto and nome_produto != produto.nome:
+                produto.nome = nome_produto
+            if codigo_produto and codigo_produto != produto.codigo:
+                # Verificar se o código já existe em outro produto
+                if Produto.objects.filter(codigo=codigo_produto).exclude(id=produto.id).exists():
+                    messages.error(request, f'Código "{codigo_produto}" já está sendo usado por outro produto!')
+                    return redirect('editar_estoque', estoque_id=estoque_id)
+                produto.codigo = codigo_produto
+            if peso_produto and peso_produto != produto.peso:
+                produto.peso = peso_produto
+            if categoria_produto and categoria_produto != produto.categoria:
+                produto.categoria = categoria_produto
+            if fornecedor_produto and fornecedor_produto != produto.fornecedor:
+                produto.fornecedor = fornecedor_produto
+            
+            # Salvar produto
+            produto.save()
+            
+            # Atualizar estoque
+            if data_armazenado:
+                estoque.data_armazenado = data_armazenado
+            estoque.observacoes = observacoes
+            estoque.save()
+            
+            messages.success(request, 'Produto e estoque atualizados com sucesso!')
+            return redirect('painel')
+
+    return render(request, 'produtos/editar_estoque.html', {
+        'estoque': estoque,
+        'produto': produto,
+        'lotes': lotes,
     })
 
 def remover_produto(request,estoque_id):
@@ -400,15 +485,39 @@ def remover_produto(request,estoque_id):
     return redirect('painel')
     
 def cadastrar_produto(request):
+    # Capturar parâmetros da URL
+    codigo_preenchido = request.GET.get('codigo', '')
+    endereco_retorno = request.GET.get('endereco_retorno', '')
+    
     if request.method == 'POST':
         form = ProdutoForm(request.POST)
         if form.is_valid():
-            form.save()
+            produto = form.save()
             messages.success(request, 'Produto cadastrado com sucesso!')
-            return redirect('painel')
+            
+            # Se veio de busca por endereço, redirecionar para confirmação de armazenamento
+            if endereco_retorno and endereco_retorno.isdigit():
+                return redirect('confirmar_armazenamento_endereco', endereco_id=endereco_retorno, produto_id=produto.id)
+            else:
+                # Permanecer na página de cadastro para novos cadastros
+                # Limpar o formulário para um novo produto
+                form = ProdutoForm()
+                messages.success(request, f'Produto "{produto.nome}" cadastrado! Cadastre outro produto abaixo.')
     else:
-        form = ProdutoForm()
-    return render(request, 'produtos/cadastrar_produto.html', {'form': form})
+        # Pré-preencher o código se fornecido
+        initial_data = {}
+        if codigo_preenchido:
+            initial_data['codigo'] = codigo_preenchido
+        form = ProdutoForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'codigo_preenchido': codigo_preenchido,
+        'endereco_retorno': endereco_retorno,
+        'veio_de_busca': bool(codigo_preenchido and endereco_retorno)
+    }
+    
+    return render(request, 'produtos/cadastrar_produto.html', context)
 
 @login_required
 def editar_produto(request, produto_id):
@@ -1507,3 +1616,251 @@ def alterar_tipos_lote(request):
             messages.info(request, 'Nenhum endereço válido foi encontrado para alteração.')
     
     return redirect('cadastrar_enderecos')
+
+def buscar_produto_endereco(request, endereco_id):
+    """
+    Busca produto por código para armazenar em endereço específico
+    """
+    endereco = get_object_or_404(Armazenamento, id=endereco_id)
+    produto_encontrado = None
+    erro = None
+    
+    if request.method == 'POST':
+        codigo = request.POST.get('codigo', '').strip()
+        if codigo:
+            try:
+                produto_encontrado = Produto.objects.get(codigo=codigo)
+                # Verificar se já existe estoque neste endereço
+                if Estoque.objects.filter(produto=produto_encontrado, local=endereco).exists():
+                    erro = "Este produto já está armazenado neste endereço!"
+                    produto_encontrado = None
+            except Produto.DoesNotExist:
+                # Redirecionar para cadastro de produto com código pré-preenchido
+                return redirect(f'/produtos/cadastrar_produto/?codigo={codigo}&endereco_retorno={endereco.id}')
+    
+    context = {
+        'endereco': endereco,
+        'produto_encontrado': produto_encontrado,
+        'erro': erro,
+        'codigo_pesquisado': request.POST.get('codigo', '') if request.method == 'POST' else ''
+    }
+    
+    return render(request, 'produtos/buscar_produto_endereco.html', context)
+
+def confirmar_armazenamento_endereco(request, endereco_id, produto_id):
+    """
+    Confirma armazenamento do produto no endereço específico
+    """
+    endereco = get_object_or_404(Armazenamento, id=endereco_id)
+    produto = get_object_or_404(Produto, id=produto_id)
+    
+    # Verificar se já existe estoque neste endereço
+    if Estoque.objects.filter(produto=produto, local=endereco).exists():
+        messages.error(request, "Este produto já está armazenado neste endereço!")
+        return redirect('painel')
+    
+    if request.method == 'POST':
+        data_validade = request.POST.get('data_validade')
+        observacoes = request.POST.get('observacoes', '')
+        data_armazenado = request.POST.get('data_armazenado')
+        
+        # Verificar se a data de validade é obrigatória
+        if not data_validade:
+            messages.error(request, "Data de validade é obrigatória!")
+            return render(request, 'produtos/confirmar_armazenamento_endereco.html', {
+                'endereco': endereco,
+                'produto': produto
+            })
+        
+        # Criar o lote se não existir
+        lote, created = Lote.objects.get_or_create(
+            produto=produto,
+            validade=data_validade,
+            defaults={
+                'numero_lote': f'LOTE-{produto.codigo}-{data_validade.replace("-", "")}',
+                'quantidade': 1
+            }
+        )
+        
+        # Criar o estoque
+        Estoque.objects.create(
+            produto=produto,
+            local=endereco,
+            data_armazenado=data_armazenado or timezone.now().date(),
+            observacoes=observacoes
+        )
+        
+        messages.success(request, f'Produto "{produto.nome}" armazenado com sucesso em {endereco}!')
+        return redirect('painel')
+    
+    context = {
+        'endereco': endereco,
+        'produto': produto
+    }
+    
+    return render(request, 'produtos/confirmar_armazenamento_endereco.html', context)
+
+@login_required
+def pagina_principal(request):
+    """
+    Página principal que combina dashboard com painel de estoque completo.
+    Inclui botões úteis, busca rápida e visualização completa do estoque.
+    """
+    # Processar busca por código
+    busca_codigo = request.GET.get('busca_codigo', '')
+    resultado_busca = None
+    
+    if busca_codigo:
+        try:
+            produto = Produto.objects.get(codigo=busca_codigo)
+            resultado_busca = produto
+        except Produto.DoesNotExist:
+            resultado_busca = None
+    
+    # Buscar todos os endereços cadastrados (não apenas com estoque)
+    enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel')
+    
+    # Organizar por ruas e prédios
+    organizacao = {}
+    
+    for endereco in enderecos:
+        rua = endereco.rua
+        predio = endereco.predio
+        
+        if rua not in organizacao:
+            organizacao[rua] = {}
+        if predio not in organizacao[rua]:
+            organizacao[rua][predio] = []
+        
+        # Buscar produtos neste endereço
+        estoques = Estoque.objects.filter(local=endereco).select_related('produto')
+        produtos_com_lotes = []
+        
+        for estoque in estoques:
+            produto = estoque.produto
+            lotes = produto.lotes.all().order_by('validade')
+            
+            # Calcular próxima validade e status
+            proxima_validade = None
+            status_validade = "Sem lote"
+            dias_para_vencer = None
+            
+            if lotes.exists():
+                primeiro_lote = lotes.first()
+                proxima_validade = primeiro_lote.validade
+                
+                from datetime import date
+                hoje = date.today()
+                dias_para_vencer = (proxima_validade - hoje).days
+                
+                if dias_para_vencer < 0:
+                    status_validade = "Vencido"
+                elif dias_para_vencer <= 7:
+                    status_validade = "Vence em breve"
+                elif dias_para_vencer <= 30:
+                    status_validade = "Próximo ao vencimento"
+                else:
+                    status_validade = "Válido"
+            
+            produto_info = {
+                'estoque': estoque,
+                'produto': produto,
+                'lotes': lotes,
+                'proxima_validade': proxima_validade,
+                'status_validade': status_validade,
+                'dias_para_vencer': dias_para_vencer,
+                'total_lotes': lotes.count()
+            }
+            produtos_com_lotes.append(produto_info)
+        
+        # Adicionar informações do endereço
+        endereco_info = {
+            'endereco': endereco,
+            'produtos': produtos_com_lotes,
+            'tem_produtos': len(produtos_com_lotes) > 0,
+            'total_produtos': len(produtos_com_lotes)
+        }
+        
+        organizacao[rua][predio].append(endereco_info)
+    
+    # Calcular estatísticas
+    total_enderecos = Armazenamento.objects.count()
+    enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
+    total_produtos = Estoque.objects.count()
+    
+    context = {
+        'organizacao': organizacao,
+        'total_enderecos': total_enderecos,
+        'enderecos_com_estoque': enderecos_com_estoque,
+        'enderecos_vazios': total_enderecos - enderecos_com_estoque,
+        'total_produtos': total_produtos,
+        'taxa_ocupacao': round((enderecos_com_estoque/total_enderecos)*100, 1) if total_enderecos > 0 else 0,
+        'busca_codigo': busca_codigo,
+        'resultado_busca': resultado_busca
+    }
+    
+    return render(request, 'produtos/pagina_principal.html', context)
+
+@login_required
+def detalhes_produto(request, produto_id):
+    """
+    Exibe todos os detalhes de um produto específico, incluindo:
+    - Informações básicas do produto
+    - Localização de armazenamento
+    - Todos os lotes com validades
+    - Histórico de movimentações
+    - Botões de ação (editar, excluir)
+    """
+    produto = get_object_or_404(Produto, id=produto_id)
+    
+    # Buscar estoque atual
+    estoques = Estoque.objects.filter(produto=produto).select_related('local')
+    
+    # Buscar todos os lotes
+    lotes = produto.lotes.all().order_by('validade')
+    
+    # Calcular status das validades
+    from datetime import date
+    hoje = date.today()
+    
+    lotes_com_status = []
+    for lote in lotes:
+        dias_para_vencer = (lote.validade - hoje).days
+        
+        if dias_para_vencer < 0:
+            status = "Vencido"
+            status_class = "status-vencido"
+        elif dias_para_vencer <= 7:
+            status = "Vence em breve"
+            status_class = "status-vence-breve"
+        elif dias_para_vencer <= 30:
+            status = "Próximo ao vencimento"
+            status_class = "status-proximo"
+        else:
+            status = "Válido"
+            status_class = "status-valido"
+        
+        lotes_com_status.append({
+            'lote': lote,
+            'status': status,
+            'status_class': status_class,
+            'dias_para_vencer': dias_para_vencer
+        })
+    
+    # Buscar histórico (se existir)
+    try:
+        from .models import HistoricoMovimentacao
+        historico = HistoricoMovimentacao.objects.filter(produto=produto).order_by('-data_movimentacao')[:10]
+    except:
+        historico = []
+    
+    context = {
+        'produto': produto,
+        'estoques': estoques,
+        'lotes_com_status': lotes_com_status,
+        'total_lotes': lotes.count(),
+        'historico': historico,
+        'tem_estoque': estoques.exists()
+    }
+    
+    return render(request, 'produtos/detalhes_produto.html', context)

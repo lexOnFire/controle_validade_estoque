@@ -4,6 +4,7 @@ from .views import cadastrar_produto
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
+    path('principal/', views.pagina_principal, name='pagina_principal'),
     path('buscar/',views.buscar_produto,name='buscar_produto'),
     path('perguntar/<int:produto_id>/',views.perguntar_armazenar,name='perguntar_armazenar'),
     path('armazenar/<int:produto_id>/',views.armazenar_produto,name='armazenar_produto'),
@@ -24,9 +25,13 @@ urlpatterns = [
     path('armazenar/<int:produto_id>/', views.armazenar_produto, name='armazenar_produto'),
     path('relatorio_completo/', views.relatorio_completo, name='relatorio_completo'),
     path('editar_lote/<int:lote_id>/', views.editar_lote, name='editar_lote'),
+    path('editar_estoque/<int:estoque_id>/', views.editar_estoque, name='editar_estoque'),
     path('alertas/', views.alertas, name='alertas'),
     path('alertas/<int:alerta_id>/marcar-lido/', views.marcar_alerta_lido, name='marcar_alerta_lido'),
     path('historico/', views.historico_movimentacoes, name='historico_movimentacoes'),
+    path('detalhes-produto/<int:produto_id>/', views.detalhes_produto, name='detalhes_produto'),
+    path('buscar-produto-endereco/<int:endereco_id>/', views.buscar_produto_endereco, name='buscar_produto_endereco'),
+    path('confirmar-armazenamento/<int:endereco_id>/<int:produto_id>/', views.confirmar_armazenamento_endereco, name='confirmar_armazenamento_endereco'),
     path('importar-csv/', views.importar_produtos_csv, name='importar_produtos_csv'),
     path('importar-abastecimento/', views.importar_abastecimento_csv, name='importar_abastecimento_csv'),
     path('extrair-produtos/', views.extrair_produtos_abastecimento, name='extrair_produtos_abastecimento'),

@@ -171,6 +171,79 @@
             font-style: italic;
         }
 
+        /* Estilos para o painel de cadastro rápido */
+        .quick-form {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .btn-quick {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-quick:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .link-quick {
+            flex: 1;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .link-quick:hover {
+            background: #e9ecef;
+            color: #007bff;
+        }
+
         @media (max-width: 768px) {
             .content-grid {
                 grid-template-columns: 1fr;
@@ -217,6 +290,37 @@
         </div>
 
         <div class="content-grid">
+            <!-- Painel de Cadastro Rápido -->
+            <div class="card">
+                <div class="card-header">
+                    📦 Cadastro Rápido de Produto
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{% url 'cadastrar_produto' %}" class="quick-form">
+                        <div class="form-group">
+                            <label for="codigo_rapido">Código do Produto:</label>
+                            <input type="text" 
+                                   id="codigo_rapido" 
+                                   name="codigo" 
+                                   placeholder="Digite o código..." 
+                                   class="form-input"
+                                   required>
+                        </div>
+                        <button type="submit" class="btn-quick">
+                            ➕ Cadastrar Produto
+                        </button>
+                    </form>
+                    <div class="quick-links">
+                        <a href="{% url 'cadastrar_produto' %}" class="link-quick">
+                            📝 Cadastro Completo
+                        </a>
+                        <a href="{% url 'listar_produtos' %}" class="link-quick">
+                            📋 Listar Produtos
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Alertas Ativos -->
             <div class="card">
                 <div class="card-header">

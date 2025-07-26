@@ -1,0 +1,289 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Armazenamento</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .resumo-armazenamento {
+            background: #f8f9fa;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .resumo-armazenamento h3 {
+            margin: 0 0 20px 0;
+            color: #155724;
+            text-align: center;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .info-value {
+            color: #6c757d;
+            text-align: right;
+        }
+
+        .form-section {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-section h4 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+        }
+
+        .form-control.required {
+            border-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+
+        .required-label::after {
+            content: " *";
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .required-note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Confirmar Armazenamento</h1>
+        </div>
+
+        <div class="content">
+            <div class="resumo-armazenamento">
+                <h3>📋 Resumo do Armazenamento</h3>
+                
+                <div class="info-item">
+                    <span class="info-label">🏷️ Produto:</span>
+                    <span class="info-value">{{ produto.nome }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">🔢 Código:</span>
+                    <span class="info-value">{{ produto.codigo }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">📂 Categoria:</span>
+                    <span class="info-value">{{ produto.categoria }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">📍 Endereço:</span>
+                    <span class="info-value">{{ endereco }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">🏢 Localização:</span>
+                    <span class="info-value">Rua {{ endereco.rua }} - Prédio {{ endereco.predio }} - Nível {{ endereco.nivel }} - AP {{ endereco.ap }}</span>
+                </div>
+            </div>
+
+            <form method="POST" class="form-section">
+                {% csrf_token %}
+                <h4>📝 Informações do Armazenamento</h4>
+                
+                <div class="required-note">
+                    ⚠️ Campos marcados com * são obrigatórios
+                </div>
+                
+                <div class="form-group">
+                    <label for="data_validade" class="required-label">Data de Validade</label>
+                    <input type="date" 
+                           id="data_validade" 
+                           name="data_validade" 
+                           class="form-control required" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="data_armazenado">Data de Armazenamento</label>
+                    <input type="date" 
+                           id="data_armazenado" 
+                           name="data_armazenado" 
+                           class="form-control" 
+                           value="{{ 'today'|date:'Y-m-d' }}">
+                    <small style="color: #6c757d;">Se não informado, será utilizada a data atual</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="observacoes">Observações</label>
+                    <textarea id="observacoes" 
+                              name="observacoes" 
+                              class="form-control" 
+                              rows="3" 
+                              placeholder="Observações sobre o armazenamento (opcional)..."></textarea>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-success">
+                        ✅ Confirmar Armazenamento
+                    </button>
+                    <a href="{% url 'buscar_produto_endereco' endereco.id %}" class="btn btn-secondary">
+                        ← Voltar à Busca
+                    </a>
+                </div>
+            </form>
+
+            <div class="alert alert-info">
+                <strong>💡 Dica:</strong> Após confirmar o armazenamento, o produto ficará registrado neste endereço e você poderá visualizá-lo no painel principal.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Definir data mínima como hoje
+        document.getElementById('data_validade').min = new Date().toISOString().split('T')[0];
+        
+        // Definir data padrão de armazenamento como hoje
+        document.getElementById('data_armazenado').value = new Date().toISOString().split('T')[0];
+    </script>
+</body>
+</html>

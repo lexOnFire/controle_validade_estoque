@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Painel de Estoque</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            overflow-x: auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            min-width: 1600px;
+            table-layout: fixed;
+        }
+
+        .predio-section {
+            margin-bottom: 40px;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .predio-title {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px;
+            margin-bottom: 0;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .predio-section {
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .predio-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            margin: 0;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .rua-section {
+            margin-bottom: 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rua-title {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #495057;
+            padding: 0.75rem 1rem;
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .predio-table {
+            border-radius: 0;
+            overflow: visible;
+            margin: 0;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .predio-table th {
+            background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            padding: 12px 8px;
+            word-wrap: break-word;
+        }
+
+        .predio-table td {
+            padding: 12px 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: top;
+        }
+
+        /* Definir larguras específicas para as colunas */
+        .predio-table th:nth-child(1), .predio-table td:nth-child(1) { width: 6%; }  /* Rua */
+        .predio-table th:nth-child(2), .predio-table td:nth-child(2) { width: 6%; }  /* Prédio */
+        .predio-table th:nth-child(3), .predio-table td:nth-child(3) { width: 6%; }  /* Nível */
+        .predio-table th:nth-child(4), .predio-table td:nth-child(4) { width: 6%; }  /* Ap */
+        .predio-table th:nth-child(5), .predio-table td:nth-child(5) { width: 7%; }  /* Tipo */
+        .predio-table th:nth-child(6), .predio-table td:nth-child(6) { width: 8%; }  /* Código */
+        .predio-table th:nth-child(7), .predio-table td:nth-child(7) { width: 16%; } /* Produto */
+        .predio-table th:nth-child(8), .predio-table td:nth-child(8) { width: 7%; }  /* Peso */
+        .predio-table th:nth-child(9), .predio-table td:nth-child(9) { width: 8%; }  /* Validade 1 */
+        .predio-table th:nth-child(10), .predio-table td:nth-child(10) { width: 8%; } /* Validade 2 */
+        .predio-table th:nth-child(11), .predio-table td:nth-child(11) { width: 8%; } /* Validade 3 */
+        .predio-table th:nth-child(12), .predio-table td:nth-child(12) { width: 10%; } /* Data Abastecimento */
+        .predio-table th:nth-child(13), .predio-table td:nth-child(13) { width: 10%; } /* Status */
+        .predio-table th:nth-child(14), .predio-table td:nth-child(14) { width: 14%; } /* Ações */
+
+        .predio-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .predio-table tbody tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        th,
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        th {
+            background: #f1f1f1;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .top-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .top-bar a,
+        .top-bar button {
+            background: #007bff;
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            border: none;
+            font-size: 15px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .top-bar a:hover,
+        .top-bar button:hover {
+            background: #0056b3;
+        }
+
+        .actions a {
+            color: #c00;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        .vencido {
+            color: #c00;
+            font-weight: bold;
+        }
+
+        .ok {
+            color: #28a745;
+        }
+
+        .nowrap {
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        /* Estilos para tipos de armazenamento */
+        .tipo-inteiro {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .tipo-meio {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .btn-saida {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-alterar-tipo {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-alterar-tipo:hover {
+            background: #5a6268;
+        }
+
+        /* Estilos para colunas de endereço */
+        .endereco-col {
+            background: #f8f9fa !important;
+            font-weight: 600;
+            color: #495057;
+            text-align: center;
+            border-left: none;
+        }
+
+        .endereco-header {
+            background: #e9ecef !important;
+            color: #495057 !important;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        /* Filtros ocultos */
+        .filtros-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .filtros-toggle {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filtros-toggle:hover {
+            background: #0056b3;
+        }
+
+        .filtros-content {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .filtros-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filtro-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filtro-item label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .filtro-item input, .filtro-item select {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Ações simplificadas e atrativas */
+        .actions {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .btn-action {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 3px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+
+        .btn-remove {
+            background: #fff;
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-remove:hover {
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-edit {
+            background: #fff;
+            color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-edit:hover {
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Botões de remover validade simplificados */
+        .btn-remove-validade {
+            background: #fff;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            border-radius: 3px;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove-validade:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Sistema de colapso para ruas/prédios */
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: background 0.2s ease;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .collapsible {
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+
+        .collapsed {
+            max-height: 0 !important;
+        }
+
+        .visibility-info {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-left: 10px;
+        }
+
+        /* Melhorar badges de tipo */
+        .tipo-inteiro {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .tipo-meio {
+            background: #fff3e0;
+            color: #f57c00;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        /* Melhorar a responsividade em telas menores */
+        @media (max-width: 1200px) {
+            .container {
+                padding: 16px;
+                margin: 20px auto;
+            }
+            
+            .predio-table {
+                font-size: 14px;
+            }
+            
+            .predio-table th, .predio-table td {
+                padding: 8px 6px;
+            }
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        ul {
+            color: #c00;
+            margin-top: 16px;
+            text-align: center;
+            list-style: none;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <a href="{% url 'dashboard' %}">📊 Dashboard</a>
+            <a href="{% url 'cadastrar_produto' %}">Cadastrar Produto</a>
+            <a href="{% url 'listar_produtos' %}">📝 Gerenciar Produtos</a>
+            <a href="{% url 'importar_produtos_csv' %}">📦 Importar CSV</a>
+            <a href="{% url 'cadastrar_enderecos' %}">Cadastrar Endereço</a>
+            <a href="{% url 'relatorio_completo' %}">Relatório Completo</a>
+            <a href="{% url 'alertas' %}">🔔 Alertas</a>
+            <a href="{% url 'historico_movimentacoes' %}">📈 Histórico</a>
+        </div>
+        <h2>Painel de Estoque</h2>
+
+        <!-- Sistema de Filtros Ocultos -->
+        <div class="filtros-container">
+            <button class="filtros-toggle" onclick="toggleFiltros()">
+                <span>🔍 Filtros de Pesquisa</span>
+                <span id="filtros-icon">▼</span>
+            </button>
+            <div class="filtros-content" id="filtros-content">
+                <form method="get" style="margin: 0;">
+                    <div class="filtros-row">
+                        <div class="filtro-item">
+                            <label>Buscar por Código:</label>
+                            <input type="text" name="codigo" placeholder="Digite o código..." value="{{ request.GET.codigo }}">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Produto:</label>
+                            <input type="text" name="produto" placeholder="Nome do produto..." value="{{ request.GET.produto }}">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Rua:</label>
+                            <input type="text" name="rua" placeholder="Nº da rua..." value="{{ request.GET.rua }}">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Prédio:</label>
+                            <input type="text" name="predio" placeholder="Nº do prédio..." value="{{ request.GET.predio }}">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Nível:</label>
+                            <select name="nivel">
+                                <option value="">Todos</option>
+                                <option value="0" {% if request.GET.nivel == '0' %}selected{% endif %}>0</option>
+                                <option value="1" {% if request.GET.nivel == '1' %}selected{% endif %}>1</option>
+                                <option value="2" {% if request.GET.nivel == '2' %}selected{% endif %}>2</option>
+                                <option value="3" {% if request.GET.nivel == '3' %}selected{% endif %}>3</option>
+                                <option value="4" {% if request.GET.nivel == '4' %}selected{% endif %}>4</option>
+                            </select>
+                        </div>
+                        <div class="filtro-item">
+                            <label>Tipo:</label>
+                            <select name="tipo">
+                                <option value="">Todos</option>
+                                <option value="inteiro" {% if request.GET.tipo == 'inteiro' %}selected{% endif %}>Inteiro</option>
+                                <option value="meio" {% if request.GET.tipo == 'meio' %}selected{% endif %}>Meio</option>
+                            </select>
+                        </div>
+                        <div class="filtro-item">
+                            <label>&nbsp;</label>
+                            <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                🔍 Filtrar
+                            </button>
+                        </div>
+                        <div class="filtro-item">
+                            <label>&nbsp;</label>
+                            <a href="{% url 'painel' %}" style="background: #6c757d; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px; display: inline-block;">
+                                🔄 Limpar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if busca_codigo %}
+        {% if resultado_busca == 'not_found' %}
+        <div style="color: #c00; margin-bottom: 16px; text-align:center;">Produto não encontrado!</div>
+        <form method="get" action="{% url 'armazenar_produto' %}" style="text-align:center;">
+            <input type="hidden" name="codigo" value="{{ busca_codigo }}" />
+            <button type="submit" style="margin-top:10px;">Cadastrar e armazenar este produto?</button>
+        </form>
+        {% else %}
+        <div style="background: #e9ffe9; border: 1px solid #28a745; padding: 12px; border-radius: 6px; margin-bottom: 16px; text-align:center;">
+            <b>Produto encontrado:</b><br />
+            Nome: {{ resultado_busca.nome }}<br />
+            Código: {{ resultado_busca.codigo }}<br />
+
+            {% if lotes_existentes %}
+            <p><strong>Lotes existentes:</strong></p>
+            <ul style="list-style: none; padding: 0;">
+                {% for lote in lotes_existentes %}
+                <li>Lote: {{ lote.numero_lote|default:"Sem número" }} -
+                    Validade: {{ lote.validade|date:"d/m/Y" }} -
+                    Quantidade: {{ lote.quantidade }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <div style="margin-top: 15px;">
+                <p><strong>O que deseja fazer?</strong></p>
+                <form method="get" action="{% url 'armazenar_produto' resultado_busca.id %}" style="display:inline;">
+                    <button type="submit" style="margin-top:10px;">Armazenar com nova validade</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        {% if predios %}
+            {% for predio_nome, ruas in predios.items %}
+            <div class="predio-section" style="margin-bottom: 2rem;">
+                <h2 class="predio-title" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;"
+                    onclick="togglePredioVisibility('{{ predio_nome|slugify }}')">
+                    <button class="collapse-btn" id="btn-{{ predio_nome|slugify }}">▼</button>
+                    <span>🏢 Prédio: {{ predio_nome }}</span>
+                    <span class="visibility-info" id="info-{{ predio_nome|slugify }}">{{ ruas.items|length }} rua{{ ruas.items|length|pluralize }}</span>
+                </h2>
+                
+                <div class="collapsible" id="content-{{ predio_nome|slugify }}" style="max-height: none;">
+                {% for rua_nome, itens in ruas.items %}
+                <div class="rua-section" style="margin-bottom: 1.5rem; border: 1px solid #e0e0e0; border-radius: 8px; overflow-x: auto;">
+                    <h3 class="rua-title" style="background: #f8f9fa; color: #495057; padding: 0.75rem 1rem; margin: 0; border-bottom: 1px solid #e0e0e0; font-size: 1.2rem; font-weight: 600; display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+                        onclick="toggleRuaVisibility('{{ predio_nome|slugify }}-{{ rua_nome|slugify }}')">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button class="collapse-btn" id="btn-{{ predio_nome|slugify }}-{{ rua_nome|slugify }}" style="color: #495057;">▼</button>
+                            <span>🛣️ Rua: {{ rua_nome }} ({{ itens|length }} item{{ itens|length|pluralize }})</span>
+                        </div>
+                        <div>
+                            {% with primeiro_item=itens.0 %}
+                            {% if primeiro_item.local %}
+                            <a href="{% url 'alterar_tipo_endereco' primeiro_item.local.id %}" class="btn-alterar-tipo"
+                               onclick="return confirm('Alterar tipo de armazenamento deste endereco')">>
+                               {% if primeiro_item.local.categoria_armazenamento == 'inteiro' %}
+                                   🔄 Para Saída
+                               {% else %}
+                                   🔄 Para Inteiro
+                               {% endif %}
+                            </a>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </h3>
+                    
+                    <div class="collapsible" id="table-{{ predio_nome|slugify }}-{{ rua_nome|slugify }}" style="max-height: none;">
+                    <div style="overflow-x: auto;">
+                        <table class="predio-table" style="margin: 0;">
+                            <thead>
+                                <tr style="background: #f1f3f4;">
+                                    <th class="endereco-header">Rua</th>
+                                    <th class="endereco-header">Prédio</th>
+                                    <th class="endereco-header">Nível</th>
+                                    <th class="endereco-header">Ap</th>
+                                    <th style="text-align: center;">Tipo</th>
+                                    <th>Código</th>
+                                    <th>Produto</th>
+                                    <th>Peso</th>
+                                    <th>Validade 1</th>
+                                    <th>Validade 2</th>
+                                    <th>Validade 3</th>
+                                    <th>Data de Abastecimento</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            {% with lotes=item.produto.lotes.all|dictsort:"validade" %}
+                            <tr>
+                                <td class="endereco-col">{{ item.local.rua }}</td>
+                                <td class="endereco-col">{{ item.local.predio }}</td>
+                                <td class="endereco-col">{{ item.local.nivel }}</td>
+                                <td class="endereco-col">{{ item.local.ap }}</td>
+                                <td style="text-align: center;">
+                                    {% if item.local.categoria_armazenamento == 'inteiro' %}
+                                        <span class="tipo-inteiro">🔵 Inteiro</span>
+                                    {% else %}
+                                        <span class="tipo-meio">🟡 Meio</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.produto.codigo }}</td>
+                                <td class="nowrap">{{ item.produto.nome }}</td>
+                                <td class="nowrap">{{ item.produto.peso }}</td>
+                                <td>
+                                    {% if lotes|length > 0 %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.0.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.0.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.0.id }}" class="btn-remove-validade" title="Remover esta validade" onclick="return confirm('🗑️ Confirmar remoção desta validade?')">×</button>
+                                        </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lotes|length > 1 %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.1.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.1.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.1.id }}" class="btn-remove-validade" title="Remover esta validade" onclick="return confirm('🗑️ Confirmar remoção desta validade?')">×</button>
+                                        </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if lotes|length > 2 %}
+                                        <form method="post" action="{% url 'editar_lote' lotes.2.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <span>{{ lotes.2.validade|date:"d/m/Y" }}</span>
+                                            <button type="submit" name="remover_lote_id" value="{{ lotes.2.id }}" class="btn-remove-validade" title="Remover esta validade" onclick="return confirm('🗑️ Confirmar remoção desta validade?')">×</button>
+                                        </form>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.data_armazenado|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if lotes and lotes.0.validade <= today %}
+                                        <span class="vencido" style="color:#c00;font-weight:bold;">Vencido</span>
+                                    {% elif lotes and lotes.0.validade <= hoje_mais_30 %}
+                                        <span style="color:#bfa900;font-weight:bold;">Próximo do vencimento</span>
+                                    {% else %}
+                                        <span class="ok">Dentro da validade</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions">
+                                    <a href="{% url 'remover_produto' item.id %}" class="btn-action btn-remove"
+                                        onclick="return confirm('❌ Tem certeza que deseja remover este produto do estoque?')">
+                                        🗑️ Remover
+                                    </a>
+                                    {% if item.produto.codigo %}
+                                        <a href="{% url 'cadastrar_produto' %}?codigo={{ item.produto.codigo }}" class="btn-action btn-edit">
+                                            ✏️ Editar
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                    </div> <!-- Fecha collapsible da rua -->
+                </div>
+                {% endfor %} <!-- Fecha loop das ruas -->
+                </div> <!-- Fecha collapsible do prédio -->
+            </div>
+            {% endfor %} <!-- Fecha loop dos prédios -->
+        {% else %}
+            <div style="text-align:center; padding: 40px; color: #666;">
+                <p>Nenhum produto armazenado no estoque.</p>
+            </div>
+        {% endif %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <script>
+        // Função para colapsar/expandir prédios
+        function togglePredioVisibility(predioId) {
+            const content = document.getElementById('content-' + predioId);
+            const btn = document.getElementById('btn-' + predioId);
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                content.style.maxHeight = 'none';
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                content.style.maxHeight = '0';
+                btn.textContent = '▶';
+            }
+        }
+
+        // Função para colapsar/expandir ruas
+        function toggleRuaVisibility(ruaId) {
+            const content = document.getElementById('table-' + ruaId);
+            const btn = document.getElementById('btn-' + ruaId);
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                content.style.maxHeight = 'none';
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                content.style.maxHeight = '0';
+                btn.textContent = '▶';
+            }
+        }
+
+        // Função existente para filtros
+        function toggleFiltros() {
+            const content = document.getElementById('filtros-content');
+            const icon = document.getElementById('filtros-icon');
+            
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        }
+
+        // Auto-expandir filtros se houver parâmetros de busca
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasFilters = urlParams.has('codigo') || urlParams.has('produto') || 
+                              urlParams.has('rua') || urlParams.has('predio') || 
+                              urlParams.has('nivel') || urlParams.has('tipo');
+            
+            if (hasFilters) {
+                document.getElementById('filtros-content').style.display = 'block';
+                document.getElementById('filtros-icon').textContent = '▲';
+            }
+        });
+    </script>
+</body>
+
+</html>
