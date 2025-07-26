@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Environment variables
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/settings.json
+.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Scripts de desenvolvimento temporários
+corrigir_*.py
+debug_*.py
+demonstrar_*.py
+excluir_*.py
+finalizar_*.py
+gerar_*.py
+limpar_*.py
+melhorar_*.py
+relatorio_*.py
+testar_*.py
+validar_*.py
+vasculhar_*.py
+verificar_*.py
+template_*.html
+
+# Backups
+*_backup.*
+*_bak.*
+*.bak
