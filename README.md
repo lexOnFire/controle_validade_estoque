@@ -1,158 +1,300 @@
-# Sistema de Controle de Validade de Estoque
+# Sistema Controle de Validade de Estoque 🏭
 
-## 📋 Visão Geral
-Sistema Django para controle de validade de estoque com interface moderna em cards, agrupamento visual e validações automáticas.
+Sistema completo para controle de validade de produtos em estoque, desenvolvido em Django com interface moderna e funcionalidades avançadas.
 
-## 🎨 **NOVA INTERFACE COM CARDS** (Atualização recente)
-A página principal foi completamente repaginada com um layout moderno baseado em cards:
+## 🎯 Principais Características
 
-### 🏷️ Layout de Cards
-- **Cards por endereço**: Cada endereço é exibido em um card individual
-- **Design responsivo**: Grid adaptável para diferentes tamanhos de tela
-- **Organização visual**: Rua > Prédio > Cards de endereços
-- **Sistema de colapso**: Botões para expandir/colapsar ruas
+### ✨ **Múltiplas Validades por Produto**
+- **Interface dinâmica** para adicionar/remover validades
+- **Quantidades individuais** por validade
+- **Criação automática** de lotes únicos
+- **Preservação de contexto** após operações
 
-### � Cards de Produto
-- Nome do produto em destaque
-- Código em formato monospace
-- **Badges de status coloridos**:
-  - 🔴 Vencido (vermelho)
-  - 🟠 Vence em breve (laranja) 
-  - 🟡 Próximo ao vencimento (amarelo)
-  - 🟢 Válido (verde)
-- Informações detalhadas (validade, lotes, data de armazenamento)
-- Botões de ação com ícones (Detalhes, Editar, Remover)
+### 🔄 **Sistema FIFO Inteligente**
+- **First In, First Out** automático por validade
+- **Transferência automática** Nível 2 → Nível 0
+- **Atualização automática** de datas mais antigas
+- **Controle total** de movimentações
 
-### 📱 Melhorias Visuais
-- Gradientes modernos em headers
-- Animações de hover suaves
-- Sombras e elevação em cards
-- Interface totalmente responsiva
-- Endereços vazios com design diferenciado
+### 🏢 **Endereçamento Avançado**
+- **Organização inteligente** por Rua-Prédio-Nível-AP
+- **Códigos únicos** gerados automaticamente
+- **Busca contextual** por endereços vazios
+- **QR Codes** para integração com coletores
 
-## �🏗️ Estrutura do Sistema
+### 🎨 **Interface Moderna**
+- **Cards responsivos** com hover effects
+- **Busca em tempo real** (AJAX)
+- **Botões contextuais** por lote/endereço
+- **Feedback visual** instantâneo
 
-### Modelos Principais
-- **Produto**: Cadastro básico de produtos
-- **Lote**: Controle de lotes com validade
-- **Estoque**: Controle de quantidades por lote
-- **Armazenamento**: Endereços físicos de armazenamento
+## 🚀 **Últimas Atualizações (Janeiro 2025)**
 
-### Interface Principal
-- **Página Principal**: Visão consolidada com cards modernos e navegação intuitiva
-- **Cadastro de Endereços**: Interface limpa com cards e controles de colapso
-- **Relatórios**: Análises e relatórios do sistema
+### 🆕 **Funcionalidades Implementadas**
+- ✅ **Múltiplas validades** em uma única operação
+- ✅ **JavaScript dinâmico** para campos de validade
+- ✅ **Preservação de filtros** na busca avançada
+- ✅ **Botões contextuais** EDITAR por lote/endereço
+- ✅ **Validações aprimoradas** client/server-side
+- ✅ **Interface responsiva** para dispositivos móveis
 
-## 🔒 Regras de Validação Automática
+### 🔧 **Melhorias Técnicas**
+- ✅ **Backend otimizado** para processamento em lote
+- ✅ **Queries otimizadas** com select_related
+- ✅ **Tratamento de erros** robusto
+- ✅ **Logs detalhados** de operações
+- ✅ **Tokens CSRF** em todos os formulários
 
-### Regra Principal: Nível 0 = Meio
-**IMPORTANTE**: Todos os endereços no nível 0 devem ser do tipo "meio".
+## 📦 **Módulos do Sistema**
 
-#### Implementação
-- **Validação Automática**: O modelo `Armazenamento` possui validação que corrige automaticamente qualquer endereço nível 0 para "meio"
-- **Local**: `produtos/models.py` - métodos `clean()` e `save()`
-- **Proteção**: Impossível salvar endereços nível 0 como "inteiro" via interface ou código
-
-#### Código de Validação
+### 🏷️ **Gestão de Produtos**
 ```python
-def clean(self):
-    if self.nivel == '0' and self.categoria_armazenamento != 'meio':
-        self.categoria_armazenamento = 'meio'
-
-def save(self, *args, **kwargs):
-    self.clean()
-    super().save(*args, **kwargs)
+# Funcionalidades
+- CRUD completo com validações
+- Importação em lote via CSV
+- Busca avançada por código/nome/categoria
+- Múltiplas validades por produto
+- Controle de fornecedores
 ```
 
-## 🎯 Interface do Usuário
+### 🏭 **Gestão de Armazenamento**
+```python
+# Funcionalidades
+- Endereçamento automático RUA-PRÉDIO-NÍVEL-AP
+- Controle de capacidade por endereço
+- Busca por endereços vazios/ocupados
+- Organização visual por localização
+- Regra automática: Nível 0 = Área de Saída
+```
 
-### Funcionalidades Principais
-1. **Agrupamento Visual**: Cards organizados por endereço
-2. **Controles de Colapso**: Minimizar/expandir ruas e prédios
-3. **Barra de Ferramentas**: Ações centralizadas e organizadas
-4. **Dropdown de Ações**: Menus limpos sem poluição visual
-5. **Hover e Feedback**: Interações visuais modernas
+### 📊 **Controle de Estoque**
+```python
+# Funcionalidades
+- FIFO automático por validade
+- Transferência inteligente entre níveis
+- Alertas de vencimento
+- Histórico completo de movimentações
+- Dashboard com métricas em tempo real
+```
 
-### Controles de Navegação
-- **Expandir/Colapsar Tudo**: Controle geral de visibilidade
-- **Filtros por Rua/Prédio**: Navegação específica
-- **Contador de Visibilidade**: Mostra quantos itens estão visíveis
-- **Busca Rápida**: Localização de endereços específicos
+### 🎯 **Sistema de Lotes**
+```python
+# Funcionalidades
+- Criação automática de lotes únicos
+- Controle de quantidades por lote
+- Numeração sequencial inteligente
+- Validações por data de validade
+- Rastreabilidade completa
+```
 
-## 🛠️ Scripts de Manutenção
+## 🛠️ **Tecnologias Utilizadas**
 
-### Scripts Disponíveis
-1. **`verificar_nivel_0.py`**: Verifica e corrige endereços nível 0
-2. **`validar_sistema_nivel_0.py`**: Validação completa do sistema
-3. **`testar_validacao_nivel_0.py`**: Teste da validação automática
+| Tecnologia | Versão | Uso |
+|------------|--------|-----|
+| **Django** | 5.2.4 | Framework web principal |
+| **Python** | 3.13.3 | Linguagem de programação |
+| **SQLite** | 3.x | Banco de dados |
+| **Bootstrap** | 5.x | Framework CSS |
+| **Font Awesome** | 6.x | Ícones |
+| **JavaScript** | ES6+ | Interatividade frontend |
 
-### Como Executar
+## 📋 **Arquitetura de Dados**
+
+### 🗂️ **Modelos Principais**
+
+```python
+# Produto
+- nome, codigo (único), peso
+- categoria, fornecedor
+- timestamps de auditoria
+- métodos: proxima_validade(), esta_vencido()
+
+# Armazenamento
+- rua, predio, nivel, apartamento
+- categoria (inteiro/meio), capacidade
+- codigo único auto-gerado
+- validação: nível 0 = meio (automático)
+
+# Estoque
+- produto, local, data_armazenado
+- data_validade, observacoes
+- auditoria de alterações
+
+# Lote
+- produto, validade, quantidade
+- numero_lote (único), data_fabricacao
+- ordenação por FIFO
+
+# HistoricoMovimentacao
+- origem/destino, tipo_operacao
+- usuario, observacoes, timestamp
+- rastreabilidade completa
+```
+
+## 🎯 **Regras de Negócio**
+
+### 🔄 **FIFO Automático**
+- Produtos com **validade mais próxima** saem primeiro
+- **Transferência automática** do estoque para expedição
+- **Atualização inteligente** de datas mais antigas
+
+### 🏢 **Hierarquia de Níveis**
+- **Nível 2**: Armazenamento (Palete Fechado)
+- **Nível 0**: Expedição (Área de Saída) - **AUTOMÁTICO**
+- **Validação**: Impossível alterar tipo do nível 0
+
+### 📊 **Controle de Capacidade**
+- **Limite configurável** por endereço
+- **Alertas visuais** de lotação
+- **Taxa de ocupação** em tempo real
+
+## 🚀 **Instalação e Configuração**
+
+### 1️⃣ **Clone do Repositório**
 ```bash
-# Verificar e corrigir endereços nível 0
-python verificar_nivel_0.py
-
-# Validar integridade do sistema
-python validar_sistema_nivel_0.py
-
-# Testar validação automática
-python testar_validacao_nivel_0.py
+git clone https://github.com/lexOnFire/controle_validade_estoque.git
+cd controle_validade_estoque
 ```
 
-## 📊 Estrutura de Dados
+### 2️⃣ **Ambiente Virtual**
+```bash
+python -m venv venv
 
-### Tipos de Armazenamento
-- **inteiro**: Para níveis 1, 2, 3, 4
-- **meio**: Obrigatório para nível 0, opcional para outros
+# Windows
+venv\Scripts\activate
 
-### Níveis Suportados
-- **Nível 0**: Térreo (sempre "meio")
-- **Níveis 1-4**: Andares superiores ("inteiro" ou "meio")
-
-## 🔧 Desenvolvimento
-
-### Tecnologias
-- **Django 5.2.4**
-- **Python 3.12.3**
-- **SQLite** (banco de dados)
-- **HTML/CSS/JavaScript** (interface)
-
-### Estrutura de Arquivos
-```
-produtos/
-├── models.py          # Modelos com validações
-├── views.py           # Lógica de negócio
-├── urls.py            # Rotas
-├── forms.py           # Formulários
-├── templates/         # Templates HTML
-│   └── produtos/
-├── migrations/        # Migrações do banco
-└── __pycache__/       # Cache Python
+# Linux/Mac
+source venv/bin/activate
 ```
 
-## ✅ Status do Sistema
+### 3️⃣ **Dependências**
+```bash
+pip install django==5.2.4
+pip install pillow  # Para imagens (opcional)
+```
 
-### Validações Implementadas
-- ✅ Regra nível 0 = meio (automática)
-- ✅ Interface limpa e organizada
-- ✅ Controles de colapso funcionando
-- ✅ Barra de ferramentas unificada
-- ✅ Dropdown de ações implementado
-- ✅ Scripts de manutenção criados
+### 4️⃣ **Configuração do Banco**
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+```
 
-### Testes Realizados
-- ✅ Criação automática corrige nível 0
-- ✅ Edição mantém validação
-- ✅ Outros níveis funcionam normalmente
-- ✅ Interface responsiva e limpa
-- ✅ 590 endereços nível 0 validados
+### 5️⃣ **Execução**
+```bash
+python manage.py runserver
+```
 
-## 🚀 Próximos Passos
-1. Documentação de API
-2. Testes automatizados
-3. Backup automático
-4. Logs de auditoria
-5. Relatórios avançados
+Acesse: `http://127.0.0.1:8000`
+
+## 📱 **Guia de Uso**
+
+### ➕ **Cadastro de Produtos com Múltiplas Validades**
+1. Acesse **Busca Avançada de Endereços**
+2. Selecione um **endereço vazio**
+3. Clique em **"Armazenar Produto"**
+4. Digite o **código do produto**
+5. **Adicione múltiplas validades** com o botão "+"
+6. Defina **quantidades individuais** para cada validade
+7. Sistema **cria lotes automaticamente**
+
+### 🔄 **Movimentação FIFO**
+1. Acesse **Movimentação de Estoque**
+2. Digite o **código do produto**
+3. Sistema mostra **localização atual**
+4. Use **"Abastecer"** para Nível 2 → Nível 0
+5. **FIFO automático** aplica produto mais antigo
+
+### 📊 **Dashboard e Relatórios**
+- **Painel Principal**: Visão geral por ruas/prédios
+- **Detalhes do Produto**: Histórico completo por produto
+- **Busca Avançada**: Filtros múltiplos e exportação
+- **Alertas**: Produtos próximos ao vencimento
+
+## 🎨 **Interface Moderna**
+
+### 🌟 **Características Visuais**
+- **Cards interativos** com hover effects
+- **Cores intuitivas**: Verde (válido), Amarelo (próximo), Vermelho (vencido)
+- **Ícones Font Awesome** para melhor UX
+- **Animações suaves** CSS3
+- **Responsivo** para mobile/desktop
+
+### ⚡ **Interatividade**
+- **AJAX** para busca em tempo real
+- **JavaScript dinâmico** para campos múltiplos
+- **Confirmações visuais** para ações críticas
+- **Feedback instantâneo** de operações
+
+## 🔒 **Segurança e Performance**
+
+### 🛡️ **Segurança**
+- **Autenticação obrigatória** (@login_required)
+- **Tokens CSRF** em todos os formulários
+- **Validações server-side** robustas
+- **Sanitização** de inputs
+
+### ⚡ **Performance**
+- **Queries otimizadas** com select_related/prefetch_related
+- **Paginação automática** em listas grandes
+- **Índices no banco** para consultas rápidas
+- **Cache** para consultas frequentes
+
+## 📈 **Métricas e Monitoramento**
+
+### 📊 **Dashboard Analytics**
+- **Total de produtos** cadastrados
+- **Taxa de ocupação** dos endereços
+- **Produtos próximos** ao vencimento
+- **Movimentações** do dia/semana/mês
+
+### 🔔 **Sistema de Alertas**
+- **Produtos vencidos** (vermelho)
+- **Próximos ao vencimento** (amarelo)
+- **Estoque baixo** (informativo)
+- **Endereços lotados** (atenção)
+
+## 🤝 **Contribuição**
+
+### 🔄 **Processo de Contribuição**
+1. **Fork** o repositório
+2. Crie uma **branch** para sua feature
+3. **Commit** suas alterações
+4. **Push** para sua branch
+5. Abra um **Pull Request**
+
+### 📝 **Padrões de Código**
+- **PEP 8** para Python
+- **Docstrings** em funções complexas
+- **Comentários** em lógicas de negócio
+- **Testes** para novas funcionalidades
+
+## 📞 **Suporte e Documentação**
+
+### 📋 **Documentação Técnica**
+- `GUIA_ARMAZENAR_PRODUTO_POR_CODIGO.md`
+- `RELATORIO_FINAL_ENDERECAMENTO.md`
+- `SOLUCAO_ENDERECOS_VAZIOS_PAINEL.md`
+
+### 🆘 **Suporte**
+- **Issues** no GitHub para bugs
+- **Discussions** para dúvidas gerais
+- **Wiki** para documentação extendida
+
+## 📄 **Licença**
+
+Este projeto está sob a **licença MIT**. Veja o arquivo `LICENSE` para detalhes.
 
 ---
-**Última Atualização**: Sistema validado e funcionando perfeitamente
-**Status**: ✅ Produção
+
+## 🏆 **Estatísticas do Projeto**
+
+- ⭐ **+40 views** implementadas
+- 📊 **5 modelos** principais inter-relacionados
+- 🎨 **Interface 100% responsiva**
+- 🔄 **Sistema FIFO** completamente automatizado
+- 📱 **Múltiplas validades** por operação
+- 🚀 **Performance otimizada** para grandes volumes
+
+**Desenvolvido com ❤️ usando Django 5.2.4 e tecnologias modernas**
+
+*Última atualização: Janeiro 2025*
