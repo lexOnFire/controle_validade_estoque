@@ -43,4 +43,5 @@ urlpatterns = [
     path('busca-endereco-avancada/', views.busca_endereco_avancada, name='busca_endereco_avancada'),
     path('qr-endereco/<int:endereco_id>/', views.qr_endereco, name='qr_endereco'),
     path('gerar-codigos-endereco/', views.gerar_codigos_endereco, name='gerar_codigos_endereco'),
+    path('conferente/rapido/', views.conferente_rapido, name='conferente_rapido'),
 ]

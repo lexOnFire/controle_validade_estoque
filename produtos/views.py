@@ -1305,7 +1305,7 @@ def importar_abastecimento_csv(request):
                                 produto=produto,
                                 local=armazenamento,
                                 data_armazenado=data_armazenado,
-                                usuario_responsavel=request.user.username if request.user.is_authenticated else 'Sistema CSV',
+                                usuario_responsavel=request.user.username if request.user.is_authenticated else 'Sistema',
                                 observacoes=f'Importado via CSV - Linha {linha_num}'
                             )
                             estoque_created = True
@@ -2038,7 +2038,7 @@ def pagina_principal(request):
     # Buscar todos os endereços cadastrados (não apenas com estoque) ordenados
     enderecos = Armazenamento.objects.all().order_by('rua', 'predio', 'nivel', 'ap')
     
-    # Organizar por ruas e prédios (em ordem crescente)
+    # Organizar por ruas e prédios usando lógica otimizada
     organizacao = {}
     
     for endereco in enderecos:
@@ -2620,7 +2620,7 @@ def movimentacao_estoque(request):
             except (Produto.DoesNotExist, Armazenamento.DoesNotExist):
                 messages.error(request, 'Erro ao alocar produto.')
                 context = {}
-                
+            
         elif acao == 'abastecer':
             estoque_origem_id = request.POST.get('estoque_origem_id')
             endereco_destino_id = request.POST.get('endereco_destino_id')
@@ -2747,3 +2747,46 @@ def movimentacao_estoque(request):
     })
     
     return render(request, 'produtos/movimentacao_estoque.html', context)
+
+from django.views.decorators.csrf import csrf_exempt
+
+@login_required
+@csrf_exempt
+def conferente_rapido(request):
+    """Modo Conferente Rápido: busca instantânea por código"""
+    produto = None
+    proxima_validade = None
+    localizacao = None
+    status_urgencia = None
+    codigo_busca = None
+    if request.method == 'POST':
+        codigo_busca = request.POST.get('codigo', '').strip()
+        try:
+            produto = Produto.objects.get(codigo=codigo_busca)
+            # Buscar estoque mais recente
+            estoque = Estoque.objects.filter(produto=produto).order_by('data_armazenado').first()
+            localizacao = estoque.local.codigo if estoque and estoque.local else '---'
+            # Buscar próxima validade
+            lote = produto.lotes.filter(validade__isnull=False).order_by('validade').first()
+            proxima_validade = lote.validade if lote else None
+            # Calcular status de urgência
+            if proxima_validade:
+                hoje = date.today()
+                dias = (proxima_validade - hoje).days
+                if dias < 0:
+                    status_urgencia = 'VENCIDO'
+                elif dias <= 7:
+                    status_urgencia = 'VENCE_EM_BREVE'
+                else:
+                    status_urgencia = 'OK'
+            else:
+                status_urgencia = 'SEM_VALIDADE'
+        except Produto.DoesNotExist:
+            produto = None
+    return render(request, 'produtos/conferente_rapido.html', {
+        'produto': produto,
+        'proxima_validade': proxima_validade,
+        'localizacao': localizacao,
+        'status_urgencia': status_urgencia,
+        'codigo_busca': codigo_busca
+    })

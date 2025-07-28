@@ -1,0 +1,84 @@
+{% extends 'produtos/base.html' %}
+{% block content %}
+<div class="conferente-rapido-container" style="max-width:400px;margin:auto;padding:2em;">
+    <h2 style="text-align:center;">Modo Conferente Rápido</h2>
+    <form method="post" style="margin-bottom:2em;">
+        {% csrf_token %}
+        <input type="text" name="codigo" autofocus required placeholder="Digite ou escaneie o código" style="font-size:2em;text-align:center;width:100%;padding:0.5em;">
+        <button type="submit" class="btn btn-success" style="width:100%;font-size:1.2em;margin-top:1em;">Buscar</button>
+    </form>
+    {% if produto %}
+        <div class="card" style="padding:1.5em;background:#f9f9f9;border-radius:10px;box-shadow:0 2px 8px #0001;">
+            <div style="font-size:1.5em;font-weight:bold;">{{ produto.nome }}</div>
+            <div style="font-size:1.2em;">Código: <b>{{ produto.codigo }}</b></div>
+            <div style="margin-top:1em;">
+                <span style="font-size:1.1em;">Localização:</span>
+                <span style="font-size:1.3em;font-weight:bold;">{{ localizacao }}</span>
+            </div>
+            <div style="margin-top:1em;">
+                <span style="font-size:1.1em;">Validade:</span>
+                {% if proxima_validade %}
+                    <span class="validade-destaque {% if status_urgencia == 'VENCIDO' %}bg-danger{% elif status_urgencia == 'VENCE_EM_BREVE' %}bg-warning{% else %}bg-success{% endif %}" style="font-size:1.3em;font-weight:bold;padding:0.3em 0.8em;border-radius:6px;">
+                        {{ proxima_validade|date:'d/m/Y' }}
+                    </span>
+                {% else %}
+                    <span class="text-muted">Sem validade</span>
+                {% endif %}
+            </div>
+            <div style="margin-top:1em;">
+                <span>Status:</span>
+                <span style="font-weight:bold;{% if status_urgencia == 'VENCIDO' %}color:#c00{% elif status_urgencia == 'VENCE_EM_BREVE' %}color:#e6a100{% else %}color:#090{% endif %}">
+                    {{ status_urgencia|title }}
+                </span>
+            </div>
+            <div style="margin-top:2em;display:flex;gap:0.5em;flex-wrap:wrap;justify-content:center;">
+                <a href="{% url 'armazenar_produto' produto.id %}" class="btn btn-primary" style="min-width:120px;">Armazenar</a>
+                <a href="{% url 'movimentacao_estoque' %}?codigo={{ produto.codigo }}" class="btn btn-success" style="min-width:120px;">Abastecer</a>
+                <a href="{% url 'editar_produto' produto.id %}" class="btn btn-warning" style="min-width:120px;">Editar</a>
+                <a href="{% url 'excluir_produto' produto.id %}" class="btn btn-danger" style="min-width:120px;" onclick="return confirm('Tem certeza que deseja excluir este produto?');">Excluir</a>
+            </div>
+        </div>
+    {% elif codigo_busca %}
+        <div class="alert alert-danger" style="margin-top:2em;">Produto não encontrado!</div>
+    {% endif %}
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script>
+function iniciarScanner() {
+    const scannerArea = document.getElementById('scanner-area');
+    scannerArea.style.display = 'block';
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: scannerArea,
+            constraints: {
+                facingMode: "environment"
+            }
+        },
+        decoder: {
+            readers: ["ean_reader", "code_128_reader", "ean_8_reader"]
+        }
+    }, function(err) {
+        if (err) {
+            alert('Erro ao iniciar câmera: ' + err);
+            return;
+        }
+        Quagga.start();
+    });
+    Quagga.onDetected(function(result) {
+        if(result && result.codeResult && result.codeResult.code) {
+            document.querySelector('input[name="codigo"]').value = result.codeResult.code;
+            Quagga.stop();
+            scannerArea.style.display = 'none';
+        }
+    });
+}
+</script>
+<div id="scanner-area" style="width:100%;height:200px;display:none;margin-bottom:1em;"></div>
+<div style="text-align:center;margin-bottom:1em;">
+    <button type="button" class="btn btn-dark" onclick="iniciarScanner()" style="width:100%;font-size:1em;">
+        <i class="fas fa-camera"></i> Usar câmera para escanear código
+    </button>
+</div>
+{% endblock %}

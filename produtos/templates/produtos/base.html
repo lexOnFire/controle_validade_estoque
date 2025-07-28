@@ -462,6 +462,40 @@
             }
         }
 
+        @media (max-width: 600px) {
+            .conferente-rapido-container {
+                padding: 0.5em !important;
+                max-width: 100vw !important;
+            }
+            .conferente-rapido-container input[type="text"] {
+                font-size: 1.5em !important;
+                padding: 0.7em !important;
+            }
+            .conferente-rapido-container .btn {
+                font-size: 1.1em !important;
+                padding: 1em 0.5em !important;
+                min-width: 90vw !important;
+                margin-bottom: 0.5em;
+            }
+            .card {
+                padding: 1em !important;
+            }
+            .sidebar {
+                width: 90vw !important;
+                min-width: 0 !important;
+            }
+        }
+        /* Campo de busca fixo no topo para mobile */
+        @media (max-width: 600px) {
+            .conferente-rapido-container form {
+                position: sticky;
+                top: 0;
+                background: #fff;
+                z-index: 10;
+                padding-bottom: 0.5em;
+            }
+        }
+
         /* Loading States */
         .loading {
             opacity: 0.6;
@@ -604,6 +638,13 @@
                 <a href="{% url 'importar_produtos_csv' %}" class="nav-link {% if request.resolver_match.url_name == 'importar_produtos_csv' %}active{% endif %}">
                     <i class="fas fa-file-import nav-icon"></i>
                     <span class="nav-text">Importar CSV</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="{% url 'conferente_rapido' %}" class="nav-link {% if request.resolver_match.url_name == 'conferente_rapido' %}active{% endif %}" style="background:#059669;color:#fff;font-weight:bold;border-radius:8px;margin:10px 0;">
+                    <i class="fas fa-bolt nav-icon"></i>
+                    <span class="nav-text">Modo Conferente Rápido</span>
                 </a>
             </li>
         </ul>
