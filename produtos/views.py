@@ -263,9 +263,12 @@ def relatorio_estoque(request):
 @login_required
 def painel(request):
     """
-    Painel principal que exibe o estoque organizando por rua e prédio.
-    ATUALIZADO: Agora inclui todos os prédios, mesmo os vazios, com busca por código e filtros.
+    Painel principal que exibe o estoque organizando por rua e prédio - OTIMIZADO
     """
+    # Importar utils otimizados
+    from .utils import EstoqueManager, ValidadeManager
+    from django.db.models import Prefetch
+    
     # Processar filtros de visualização
     filtro = request.GET.get('filtro', '')
     
@@ -280,27 +283,29 @@ def painel(request):
         except Produto.DoesNotExist:
             resultado_busca = 'not_found'
     
-    # Aplicar filtros de visualização
+    # Usar EstoqueManager para busca otimizada
     if filtro == 'vazios':
-        # Mostrar apenas endereços vazios
-        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
-        enderecos = Armazenamento.objects.exclude(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
+        enderecos = EstoqueManager.buscar_enderecos_vazios()[:50]  # Limitar para performance
     elif filtro == 'ocupados':
-        # Mostrar apenas endereços ocupados
-        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
-        enderecos = Armazenamento.objects.filter(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
+        enderecos = EstoqueManager.buscar_enderecos_ocupados()
     else:
-        # Mostrar todos, mas vazios primeiro
-        enderecos_com_estoque_ids = Estoque.objects.values_list('local_id', flat=True)
-        enderecos_vazios = Armazenamento.objects.exclude(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')[:20]
-        enderecos_ocupados = Armazenamento.objects.filter(id__in=enderecos_com_estoque_ids).order_by('rua', 'predio', 'nivel')
-        from itertools import chain
-        enderecos = list(chain(enderecos_vazios, enderecos_ocupados))
+        enderecos = EstoqueManager.buscar_enderecos_mixto()[:50]  # Limitar para performance
     
-    # Organizar por ruas e prédios
+    # Organizar por ruas e prédios usando lógica otimizada
     organizacao = {}
     
-    for endereco in enderecos:
+    # Prefetch dos dados necessários para reduzir queries
+    enderecos_com_dados = Armazenamento.objects.filter(
+        id__in=[e.id for e in enderecos]
+    ).prefetch_related(
+        Prefetch('estoque_set', 
+            queryset=Estoque.objects.select_related('produto').prefetch_related(
+                Prefetch('produto__lotes', 
+                    queryset=Lote.objects.order_by('validade'))
+            ))
+    ).order_by('rua', 'predio', 'nivel')
+    
+    for endereco in enderecos_com_dados:
         rua = endereco.rua
         predio = endereco.predio
         
@@ -310,45 +315,26 @@ def painel(request):
         if predio not in organizacao[rua]:
             organizacao[rua][predio] = []
         
-        # Buscar produtos no estoque para este endereço
-        produtos_estoque = Estoque.objects.filter(local=endereco).select_related('produto')
+        # Usar dados já carregados via prefetch
+        produtos_estoque = endereco.estoque_set.all()
         
-        # Enriquecer dados dos produtos com informações dos lotes
+        # Enriquecer dados usando ValidadeManager
         produtos_com_lotes = []
         for estoque in produtos_estoque:
             produto = estoque.produto
-            lotes = produto.lotes.all().order_by('validade')
+            lotes = list(produto.lotes.all())  # Já carregado via prefetch
             
-            # Calcular informações de validade
-            proxima_validade = None
-            status_validade = "Sem lote"
-            dias_para_vencer = None
-            
-            if lotes.exists():
-                primeiro_lote = lotes.first()
-                proxima_validade = primeiro_lote.validade
-                
-                from datetime import date
-                hoje = date.today()
-                dias_para_vencer = (proxima_validade - hoje).days
-                
-                if dias_para_vencer < 0:
-                    status_validade = "Vencido"
-                elif dias_para_vencer <= 7:
-                    status_validade = "Vence em breve"
-                elif dias_para_vencer <= 30:
-                    status_validade = "Próximo ao vencimento"
-                else:
-                    status_validade = "Válido"
+            # Usar ValidadeManager para calcular status
+            validade_info = ValidadeManager.calcular_status_validade(lotes)
             
             produto_info = {
                 'estoque': estoque,
                 'produto': produto,
                 'lotes': lotes,
-                'proxima_validade': proxima_validade,
-                'status_validade': status_validade,
-                'dias_para_vencer': dias_para_vencer,
-                'total_lotes': lotes.count()
+                'proxima_validade': validade_info['proxima_validade'],
+                'status_validade': validade_info['status_validade'],
+                'dias_para_vencer': validade_info['dias_para_vencer'],
+                'total_lotes': len(lotes)
             }
             produtos_com_lotes.append(produto_info)
         
@@ -362,18 +348,16 @@ def painel(request):
         
         organizacao[rua][predio].append(endereco_info)
     
-    # Calcular estatísticas
-    total_enderecos = Armazenamento.objects.count()
-    enderecos_com_estoque = Estoque.objects.values('local').distinct().count()
-    total_produtos = Estoque.objects.count()
+    # Usar EstoqueManager para estatísticas otimizadas
+    estatisticas = EstoqueManager.calcular_estatisticas()
     
     context = {
         'organizacao': organizacao,
-        'total_enderecos': total_enderecos,
-        'enderecos_com_estoque': enderecos_com_estoque,
-        'enderecos_vazios': total_enderecos - enderecos_com_estoque,
-        'total_produtos': total_produtos,
-        'taxa_ocupacao': round((enderecos_com_estoque/total_enderecos)*100, 1) if total_enderecos > 0 else 0,
+        'total_enderecos': estatisticas['total_enderecos'],
+        'enderecos_com_estoque': estatisticas['enderecos_com_estoque'],
+        'enderecos_vazios': estatisticas['enderecos_vazios'],
+        'total_produtos': estatisticas['total_produtos'],
+        'taxa_ocupacao': estatisticas['taxa_ocupacao'],
         'busca_codigo': busca_codigo,
         'resultado_busca': resultado_busca,
         'produto': resultado_busca if resultado_busca != 'not_found' else None,
@@ -1171,14 +1155,30 @@ def importar_abastecimento_csv(request):
                             erros.append(f'Linha {linha_num}: Dados de endereço incompletos para código "{codigo}"')
                         continue
                     
-                    # Buscar ou criar endereço de armazenamento
-                    armazenamento, created = Armazenamento.objects.get_or_create(
-                        rua=rua,
-                        predio=predio,
-                        nivel=nivel,
-                        ap=ap,
-                        defaults={'livre': False, 'capacidade_maxima': 1}
-                    )
+                    # Buscar ou criar endereço de armazenamento - Corrigido
+                    try:
+                        armazenamento = Armazenamento.objects.filter(
+                            rua=rua,
+                            predio=predio,
+                            nivel=nivel,
+                            ap=ap
+                        ).first()
+                        
+                        if armazenamento:
+                            created = False
+                        else:
+                            armazenamento = Armazenamento.objects.create(
+                                rua=rua,
+                                predio=predio,
+                                nivel=nivel,
+                                ap=ap,
+                                livre=False,
+                                capacidade_maxima=1
+                            )
+                            created = True
+                    except Exception as e:
+                        erros.append(f'Linha {linha_num}: Erro ao criar endereço: {str(e)}')
+                        continue
                     
                     if created:
                         enderecos_criados += 1
@@ -1249,7 +1249,7 @@ def importar_abastecimento_csv(request):
                         if tem_valor_nao_vazio:
                             # Limitar a 3 valores para não poluir o log
                             valores_limitados = dict(list(valores_validade_tentativas.items())[:3])
-                            erros.append(f'Linha {linha_num}: Formato de data inválido nas colunas de validade. Valores: {valores_limitados}')
+                            print(f'Aviso - Linha {linha_num}: Formato de data inválido nas colunas de validade. Valores: {valores_limitados}')
                     
                     data_armazenado = date.today()
                     if 'data_armazenado' in colunas_mapeadas and colunas_mapeadas['data_armazenado'] in row and row[colunas_mapeadas['data_armazenado']]:
@@ -1288,16 +1288,30 @@ def importar_abastecimento_csv(request):
                         except (ValueError, TypeError):
                             quantidade = 1
                     
-                    # Criar registro de estoque
-                    estoque, estoque_created = Estoque.objects.get_or_create(
-                        produto=produto,
-                        local=armazenamento,
-                        defaults={
-                            'data_armazenado': data_armazenado,
-                            'usuario_responsavel': request.user.username if request.user.is_authenticated else 'Sistema CSV',
-                            'observacoes': f'Importado via CSV - Linha {linha_num}'
-                        }
-                    )
+                    # Criar registro de estoque - Corrigido para evitar duplicatas
+                    try:
+                        # Tentar encontrar um registro existente
+                        estoque = Estoque.objects.filter(
+                            produto=produto,
+                            local=armazenamento
+                        ).first()
+                        
+                        if estoque:
+                            # Se encontrou, usar o existente
+                            estoque_created = False
+                        else:
+                            # Se não encontrou, criar novo
+                            estoque = Estoque.objects.create(
+                                produto=produto,
+                                local=armazenamento,
+                                data_armazenado=data_armazenado,
+                                usuario_responsavel=request.user.username if request.user.is_authenticated else 'Sistema CSV',
+                                observacoes=f'Importado via CSV - Linha {linha_num}'
+                            )
+                            estoque_created = True
+                    except Exception as e:
+                        erros.append(f'Linha {linha_num}: Erro ao criar estoque: {str(e)}')
+                        continue
                     
                     # Se não foi criado, atualizar data
                     if not estoque_created:
@@ -2509,63 +2523,58 @@ def buscar_produto_api(request):
 
 def movimentacao_estoque(request):
     """
-    Página de movimentação e abastecimento de estoque
+    Página de movimentação e abastecimento de estoque - OTIMIZADA
     """
+    # Importar utils otimizados
+    from .utils import ValidadeManager
+    from django.db.models import Prefetch
+    
     if request.method == 'POST':
         acao = request.POST.get('acao')
         codigo = request.POST.get('codigo', '').strip()
         
         if acao == 'buscar_produto':
             try:
-                produto = Produto.objects.get(codigo=codigo)
+                # Busca otimizada com prefetch
+                produto = Produto.objects.prefetch_related(
+                    Prefetch('lotes', queryset=Lote.objects.order_by('validade')),
+                    Prefetch('estoque_set', 
+                        queryset=Estoque.objects.select_related('local'))
+                ).get(codigo=codigo)
                 
-                # Buscar todos os estoques deste produto
-                estoques = Estoque.objects.filter(produto=produto).select_related('local')
+                # Usar listas ao invés de querysets para performance
+                estoques = list(produto.estoque_set.all())
+                lotes = list(produto.lotes.all())
+                todas_validades = [lote.validade for lote in lotes if lote.validade]
+                
+                # Data atual
+                data_atual = date.today()
                 
                 # Verificar se o produto não tem estoque
-                if not estoques.exists():
+                if not estoques:
                     context = {
                         'produto_encontrado': produto,
                         'produto_sem_estoque': True,
                         'enderecos_info': [],
                         'total_unidades': 0,
-                        'codigo_busca': codigo
+                        'codigo_busca': codigo,
+                        'data_atual': data_atual,
+                        'todas_validades': todas_validades
                     }
                 else:
-                    # Organizar por endereços
-                    enderecos_info = []
-                    
-                    # Buscar validades
-                    estoque_nivel_0 = estoques.filter(local__nivel='0').first()
-                    estoque_nivel_2 = estoques.filter(local__nivel='2').first()
-                    
-                    validade_atual = estoque_nivel_0.data_validade if estoque_nivel_0 else None
-                    proxima_validade = estoque_nivel_2.data_validade if estoque_nivel_2 else None
-                    
-                    for estoque in estoques:
-                        enderecos_info.append({
-                            'id': estoque.id,
-                            'endereco_codigo': estoque.local.codigo or f"R{estoque.local.rua}P{estoque.local.predio}N{estoque.local.nivel}AP{estoque.local.ap}",
-                            'rua': estoque.local.rua,
-                            'predio': estoque.local.predio,
-                            'nivel': estoque.local.nivel,
-                            'ap': estoque.local.ap,
-                            'categoria': estoque.local.categoria_armazenamento,
-                            'data_armazenado': estoque.data_armazenado,
-                            'data_validade': estoque.data_validade,
-                            'data_alteracao': estoque.data_alteracao,
-                        })
-                    
-                    # Contar total de unidades
-                    total_unidades = len(estoques)
+                    # Usar função otimizada para distribuir validades
+                    enderecos_info = ValidadeManager.distribuir_validades_por_cards(
+                        estoques, todas_validades
+                    )
                     
                     context = {
                         'produto_encontrado': produto,
                         'enderecos_info': enderecos_info,
-                        'total_unidades': total_unidades,
+                        'total_unidades': len(estoques),
                         'codigo_busca': codigo,
-                        'validade_atual': validade_atual,
-                        'proxima_validade': proxima_validade
+                        'data_atual': data_atual,
+                        'proxima_validade': todas_validades[0] if todas_validades else None,
+                        'todas_validades': todas_validades
                     }
                 
             except Produto.DoesNotExist:

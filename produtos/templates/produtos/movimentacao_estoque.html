@@ -32,10 +32,14 @@
         background: #f8f9ff;
         border: 2px solid #e9ecef;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
+        padding: 15px 20px;
+        margin-bottom: 10px;
         transition: all 0.3s ease;
         position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 80px;
     }
     
     .endereco-card:hover {
@@ -58,9 +62,23 @@
     
     .endereco-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    .endereco-details {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex: 2;
+    }
+    
+    .endereco-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
     }
     
     .endereco-codigo {
@@ -89,15 +107,83 @@
     }
     
     .endereco-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex: 2;
+    }
+    
+    .endereco-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
     }
     
     .detail-item {
         text-align: center;
-        padding: 10px;
+        padding: 0;
+        min-width: auto;
+    }
+    
+    .detail-label {
+        font-size: 0.75em;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    
+    .detail-value {
+        font-size: 0.9em;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .validade-info-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+    
+    .validade-badge-card {
+        background: #e7f3ff;
+        color: #0066cc;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+        border: 1px solid #b3d9ff;
+        margin-right: 5px;
+        margin-bottom: 2px;
+        display: inline-block;
+    }
+    
+    .validade-card-unica {
+        margin-top: 8px;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .validade-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85em;
+    }
+    
+    .validade-item i {
+        width: 16px;
+        text-align: center;
+    }
+    
+    .validade-item strong {
+        min-width: 130px;
+        font-size: 0.8em;
+    }
         background: rgba(102, 126, 234, 0.05);
         border-radius: 8px;
     }
@@ -210,6 +296,19 @@
         padding: 2px 8px;
         border-radius: 6px;
         font-weight: 600;
+    }
+    
+    .validade-badge .text-primary {
+        background: rgba(0, 123, 255, 0.3);
+        color: #cce7ff !important;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    
+    .validade-badge .badge {
+        font-size: 0.85em;
+        padding: 4px 8px;
     }
     
     .historico-section {
@@ -374,21 +473,37 @@
                                 <small>unidade{{ total_unidades|pluralize }}</small>
                             </div>
                         </div>
-                        {% if validade_atual or proxima_validade %}
+                        {% if data_atual or proxima_validade or todas_validades %}
                         <div class="col-12 mt-3">
                             <div class="validade-info">
-                                {% if validade_atual %}
+                                <!-- Data Atual -->
+                                {% if data_atual %}
                                     <div class="validade-badge mb-1">
-                                        <i class="fas fa-calendar-check"></i>
-                                        <span class="fw-bold">Validade Atual:</span>
-                                        <span class="text-success">{{ validade_atual|date:"d/m/Y" }}</span>
+                                        <i class="fas fa-calendar-day"></i>
+                                        <span class="fw-bold">Data Atual:</span>
+                                        <span class="text-primary">{{ data_atual|date:"d/m/Y" }}</span>
                                     </div>
                                 {% endif %}
+                                
+                                <!-- Próxima Validade -->
                                 {% if proxima_validade %}
-                                    <div class="validade-badge">
+                                    <div class="validade-badge mb-1">
                                         <i class="fas fa-calendar-alt"></i>
                                         <span class="fw-bold">Próxima Validade:</span>
                                         <span class="text-warning">{{ proxima_validade|date:"d/m/Y" }}</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Todas as Validades -->
+                                {% if todas_validades %}
+                                    <div class="validade-badge mb-1">
+                                        <i class="fas fa-list"></i>
+                                        <span class="fw-bold">Todas as Validades:</span>
+                                        <div class="mt-2">
+                                            {% for validade in todas_validades %}
+                                                <span class="badge bg-info me-1 mb-1">{{ validade|date:"d/m/Y" }}</span>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 {% endif %}
                             </div>
@@ -441,9 +556,10 @@
         <!-- Lista de Endereços -->
         {% if enderecos_info %}
             <div class="row">
-                {% for endereco in enderecos_info %}
-                    <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="col-12">
+                    {% for endereco in enderecos_info %}
                         <div class="endereco-card nivel-{{ endereco.nivel }}">
+                            <!-- Cabeçalho com código e categoria -->
                             <div class="endereco-header">
                                 <div class="endereco-codigo">
                                     {{ endereco.endereco_codigo }}
@@ -453,6 +569,7 @@
                                 </span>
                             </div>
                             
+                            <!-- Detalhes do endereço -->
                             <div class="endereco-details">
                                 <div class="detail-item">
                                     <div class="detail-label">Rua</div>
@@ -474,47 +591,71 @@
                                     <div class="detail-label">AP</div>
                                     <div class="detail-value">{{ endereco.ap }}</div>
                                 </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-12">
-                                    <small class="text-muted">
+                                
+                                <!-- Informações de data e validade específica do card -->
+                                <div class="validade-info-card">
+                                    <div>
                                         <i class="fas fa-calendar"></i>
-                                        Armazenado: {{ endereco.data_armazenado|date:"d/m/Y" }}
-                                        {% if endereco.data_alteracao %}
-                                            | <i class="fas fa-edit"></i>
-                                            Alteração: {{ endereco.data_alteracao|date:"d/m/Y H:i" }}
-                                        {% endif %}
-                                    </small>
+                                        {{ endereco.data_armazenado|date:"d/m/Y" }}
+                                    </div>
+                                    
+                                    <!-- Validade específica deste card -->
+                                    {% if endereco.validade_do_card %}
+                                        <div class="validade-card-unica">
+                                            {% if endereco.tipo_validade == 'saida' %}
+                                                <div class="validade-item">
+                                                    <i class="fas fa-arrow-up text-danger"></i>
+                                                    <strong>Validade {{ endereco.posicao_card }} (Saída):</strong>
+                                                    <span class="validade-badge-card bg-danger text-white">
+                                                        {{ endereco.validade_do_card|date:"d/m/Y" }}
+                                                    </span>
+                                                </div>
+                                            {% elif endereco.tipo_validade == 'proxima' %}
+                                                <div class="validade-item">
+                                                    <i class="fas fa-arrow-down text-warning"></i>
+                                                    <strong>Validade {{ endereco.posicao_card }} (Próxima):</strong>
+                                                    <span class="validade-badge-card bg-warning text-dark">
+                                                        {{ endereco.validade_do_card|date:"d/m/Y" }}
+                                                    </span>
+                                                </div>
+                                            {% else %}
+                                                <div class="validade-item">
+                                                    <i class="fas fa-clock text-info"></i>
+                                                    <strong>Validade {{ endereco.posicao_card }}:</strong>
+                                                    <span class="validade-badge-card bg-info text-white">
+                                                        {{ endereco.validade_do_card|date:"d/m/Y" }}
+                                                    </span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-muted">
+                                            <i class="fas fa-question-circle"></i>
+                                            Card {{ endereco.posicao_card }} - Sem validade
+                                        </div>
+                                    {% endif %}
                                 </div>
-                                {% if endereco.data_validade %}
-                                <div class="col-12 mt-1">
-                                    <small class="text-muted">
-                                        <i class="fas fa-exclamation-triangle text-warning"></i>
-                                        <strong>Validade: {{ endereco.data_validade|date:"d/m/Y" }}</strong>
-                                    </small>
-                                </div>
-                                {% endif %}
                             </div>
                             
-                            {% if endereco.nivel != '0' %}
-                                <button type="button" 
-                                        class="btn-abastecer" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#modalAbastecer"
-                                        data-estoque-id="{{ endereco.id }}">
-                                    <i class="fas fa-arrow-down"></i> Abastecer
-                                </button>
-                            {% else %}
-                                <div class="position-absolute top-0 end-0 m-3">
+                            <!-- Ações -->
+                            <div class="endereco-actions">
+                                {% if endereco.nivel != '0' %}
+                                    <button type="button" 
+                                            class="btn btn-primary btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalAbastecer"
+                                            data-estoque-id="{{ endereco.id }}">
+                                        <i class="fas fa-arrow-down"></i> Abastecer
+                                    </button>
+                                {% else %}
                                     <span class="badge bg-success">
                                         <i class="fas fa-check"></i> Área de Saída
                                     </span>
-                                </div>
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
         {% else %}
             <div class="no-results">

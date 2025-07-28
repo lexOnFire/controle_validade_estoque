@@ -4,14 +4,36 @@
 		{
 			"label": "Executar servidor Django",
 			"type": "shell",
-			"command": "/workspaces/controle_validade_estoque/.venv/bin/python",
+			"command": "C:/Users/alexs/AppData/Local/Programs/Python/Python313/python.exe",
 			"args": [
 				"manage.py",
 				"runserver",
-				"0.0.0.0:8000"
+				"127.0.0.1:8000"
 			],
 			"group": "build",
 			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Django: Migrate",
+			"type": "shell",
+			"command": "C:/Users/alexs/AppData/Local/Programs/Python/Python313/python.exe",
+			"args": [
+				"manage.py",
+				"migrate"
+			],
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Django: Create Superuser",
+			"type": "shell",
+			"command": "C:/Users/alexs/AppData/Local/Programs/Python/Python313/python.exe",
+			"args": [
+				"manage.py",
+				"createsuperuser"
+			],
+			"group": "build",
 			"problemMatcher": []
 		}
 	]
