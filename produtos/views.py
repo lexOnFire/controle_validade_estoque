@@ -1,3 +1,5 @@
+# Garantir importação do login_required para a view detalhes_produto
+from django.contrib.auth.decorators import login_required
 @login_required
 def detalhes_produto(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
