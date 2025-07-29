@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-zx2max*69*$ic5%fw8cpn3m7qrcglo4t^q27cwp^!c=1jy#4%@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['estoquecv.sytes.net', 'localhost', '127.0.0.1']
 
 
 # Application definition

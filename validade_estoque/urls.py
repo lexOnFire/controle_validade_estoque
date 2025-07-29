@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', pagina_principal, name='pagina_principal'),
     path('produtos/', include('produtos.urls')),
-    
     # URLs de autenticação
     path('accounts/login/', auth_views.LoginView.as_view(template_name='produtos/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
