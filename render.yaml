@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: controle-validade-estoque
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn validade_estoque.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        value: sua-chave-secreta
+      - key: DATABASE_URL
+        value: sqlite:///db.sqlite3
