@@ -1,3 +1,17 @@
+@login_required
+def detalhes_produto(request, produto_id):
+    produto = get_object_or_404(Produto, id=produto_id)
+    lotes = produto.lotes.all().order_by('validade')
+    enderecos = Estoque.objects.filter(produto=produto).select_related('local')
+    historico = HistoricoMovimentacao.objects.filter(produto=produto).order_by('-data_operacao')[:10]
+
+    context = {
+        'produto': produto,
+        'lotes': lotes,
+        'enderecos': enderecos,
+        'historico': historico,
+    }
+    return render(request, 'produtos/detalhes_produto.html', context)
 def editar_endereco(request, endereco_id):
     endereco = get_object_or_404(Armazenamento, id=endereco_id)
     if request.method == 'POST':
