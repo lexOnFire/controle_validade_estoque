@@ -16,12 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from produtos.views import pagina_principal
+from produtos import views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('', views.dashboard, name='dashboard'),  # Página inicial
     path('admin/', admin.site.urls),
-    path('', pagina_principal, name='pagina_principal'),
     path('produtos/', include('produtos.urls')),
     # URLs de autenticação
     path('accounts/login/', auth_views.LoginView.as_view(template_name='produtos/login.html'), name='login'),
