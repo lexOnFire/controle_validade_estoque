@@ -30,14 +30,6 @@ def relatorio_estoque(request):
         'today': today,
         'hoje_mais_30': hoje_mais_30
     })
-        'data_armazenado': estoque.data_armazenado if estoque else None
-    })
-from django.contrib.auth.decorators import login_required
-# Nova view para relatório completo do estoque
-@login_required
-def relatorio_completo(request):
-    from datetime import date, timedelta
-    estoque = Estoque.objects.select_related('produto', 'local').order_by('-data_armazenado')
     today = date.today()
     hoje_mais_30 = today + timedelta(days=30)
     return render(request, 'produtos/relatorio_completo.html', {
