@@ -1,63 +1,35 @@
-# Garantir importação do login_required para a view detalhes_produto
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from .models import Estoque
+from django.core.paginator import Paginator
+from datetime import date, timedelta
+
+# View para relatório completo do estoque
 @login_required
-def detalhes_produto(request, produto_id):
-    produto = get_object_or_404(Produto, id=produto_id)
-    lotes = produto.lotes.all().order_by('validade')
-    enderecos = Estoque.objects.filter(produto=produto).select_related('local')
-    historico = HistoricoMovimentacao.objects.filter(produto=produto).order_by('-data_operacao')[:10]
+def relatorio_completo(request):
+    estoque = Estoque.objects.select_related('produto', 'local').order_by('-data_armazenado')
+    today = date.today()
+    hoje_mais_30 = today + timedelta(days=30)
+    return render(request, 'produtos/relatorio_completo.html', {
+        'estoque': estoque,
+        'today': today,
+        'hoje_mais_30': hoje_mais_30
+    })
 
-    context = {
-        'produto': produto,
-        'lotes': lotes,
-        'enderecos': enderecos,
-        'historico': historico,
-    }
-    return render(request, 'produtos/detalhes_produto.html', context)
-def editar_endereco(request, endereco_id):
-    endereco = get_object_or_404(Armazenamento, id=endereco_id)
-    if request.method == 'POST':
-        form = ArmazenamentoForm(request.POST, instance=endereco)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Endereço editado com sucesso!')
-            return redirect('cadastrar_enderecos')
-    else:
-        form = ArmazenamentoForm(instance=endereco)
-    return render(request, 'produtos/editar_endereco.html', {'form': form, 'endereco': endereco})
-from django.shortcuts import redirect
-# View para editar/remover validade e data de armazenamento do lote
-def editar_lote(request, lote_id):
-    lote = get_object_or_404(Lote, id=lote_id)
-    produto = lote.produto
-    lotes = produto.lotes.all().order_by('validade')
-    estoque = Estoque.objects.filter(produto=produto).order_by('data_armazenado').first()
-
-    if request.method == 'POST':
-        if 'remover_lote_id' in request.POST:
-            remover_id = request.POST.get('remover_lote_id')
-            Lote.objects.filter(id=remover_id).delete()
-            return redirect('editar_lote', lote_id=lotes.exclude(id=remover_id).first().id if lotes.exclude(id=remover_id).exists() else lote_id)
-        elif 'nova_validade' in request.POST:
-            nova_validade = request.POST.get('nova_validade')
-            novo_numero_lote = request.POST.get('novo_numero_lote', '')
-            nova_quantidade = request.POST.get('nova_quantidade', 1)
-            Lote.objects.create(produto=produto, validade=nova_validade, numero_lote=novo_numero_lote, quantidade=nova_quantidade)
-            return redirect('editar_lote', lote_id=lote_id)
-        else:
-            validade = request.POST.get('validade')
-            data_armazenado = request.POST.get('data_armazenado')
-            lote.validade = validade
-            lote.save()
-            if estoque and data_armazenado:
-                estoque.data_armazenado = data_armazenado
-                estoque.save()
-            return redirect('painel')
-
-    return render(request, 'produtos/editar_lote.html', {
-        'lote': lote,
-        'lotes': lotes,
-        'produto': produto,
+# View para relatório paginado do estoque
+@login_required
+def relatorio_estoque(request):
+    dados = Estoque.objects.select_related('produto', 'local').order_by('-data_armazenado')
+    today = date.today()
+    hoje_mais_30 = today + timedelta(days=30)
+    paginator = Paginator(dados, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'produtos/relatorios.html', {
+        'page_obj': page_obj,
+        'today': today,
+        'hoje_mais_30': hoje_mais_30
+    })
         'data_armazenado': estoque.data_armazenado if estoque else None
     })
 from django.contrib.auth.decorators import login_required
